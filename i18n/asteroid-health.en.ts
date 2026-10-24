@@ -64,6 +64,10 @@
         <source>You haven't yet logged any steps today</source>
         <translation>You haven't yet logged any steps today</translation>
     </message>
+    <message id="id-no-heartrate-today">
+        <source>No heart rate logged today</source>
+        <translation>No heart rate logged today</translation>
+    </message>
     <message id="id-steps">
         <source>Steps</source>
         <translation>Steps</translation>
