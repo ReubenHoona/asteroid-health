@@ -37,10 +37,22 @@ MouseArea {
 
         Item { width: parent.width; height: parent.width*0.05}
 
+        Label {
+            width: parent.width*0.8
+            anchors.horizontalCenter: parent.horizontalCenter
+            visible: !hrGraph.hasData
+            //% "No heart rate logged today"
+            text: qsTrId("id-no-heartrate-today")
+            wrapMode: Text.WordWrap
+            horizontalAlignment: Text.AlignHCenter
+        }
+
         HrGraph {
+            id: hrGraph
             anchors.horizontalCenter: parent.horizontalCenter
             width: parent.width*0.9
-            height: app.height*2/3
+            height: hasData ? app.height*2/3 : 0
+            visible: hasData
         }
     }
     onClicked: pageStack.push(detailPage)

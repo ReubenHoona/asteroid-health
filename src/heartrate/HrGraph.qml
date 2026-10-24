@@ -28,14 +28,20 @@ LineGraph {
     id: graph
     property date startTime: new Date()
     property date endTime: new Date()
+    // false when nothing was logged between startTime and endTime
+    property bool hasData: false
 
-    onStartTimeChanged: graph.loadGraphData(hrDataLoader.getDataFromTo(startTime,endTime))
-    onEndTimeChanged: graph.loadGraphData(hrDataLoader.getDataFromTo(startTime,endTime))
-
-    Component.onCompleted: {
-        graph.loadGraphData(hrDataLoader.getDataFromTo(startTime,endTime))
+    function reload() {
+        var data = hrDataLoader.getDataFromTo(startTime, endTime)
+        hasData = data.length > 0
+        graph.loadGraphData(data)
     }
+
+    onStartTimeChanged: reload()
+    onEndTimeChanged: reload()
+
+    Component.onCompleted: reload()
     HrDataLoader { id: hrDataLoader
-        onDataChanged: graph.loadGraphData(getDataFromTo(startTime,endTime))
+        onDataChanged: graph.reload()
     }
 }
