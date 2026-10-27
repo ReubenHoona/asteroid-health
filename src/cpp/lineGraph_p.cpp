@@ -47,10 +47,8 @@ LineGraph_p::LineGraph_p()
 
 void LineGraph_p::paint(QPainter *painter)
 {
-    if (m_filedata.count() < 2) {
-        qDebug() << "not rendering, not enough data";
+    if (m_filedata.count() < 2) // nothing (or a single point) to draw
         return;
-    }
     int j = m_filedata.count();
     QPointF points[j];
     if (!graphRelative) {
@@ -76,10 +74,12 @@ void LineGraph_p::paint(QPainter *painter)
 }
 
 void LineGraph_p::loadGraphData(QVariant fileDataInput) {
-    qDebug() << "loadGraphData called";
     QList<QVariant> fileDataAsList = fileDataInput.toList();
     if (fileDataAsList.count() < 1) {
-        qDebug() << "no heartrate data to show, failing load";
+        // nothing logged in this range (not an error): do not keep showing
+        // the range loaded before
+        m_filedata.clear();
+        update();
         return;
     }
     int j = fileDataAsList.count();
