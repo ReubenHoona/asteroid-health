@@ -78,9 +78,9 @@ private:
     QList<QPointF> m_filedata;
     float minValue = 0;
     float maxValue = 0;
-    int minTime;
-    int maxTime;
-    bool graphRelative;
+    int minTime = 0;
+    int maxTime = 0;
+    bool graphRelative = false;
 };
 
 #endif // LINEGRAPH_P_H

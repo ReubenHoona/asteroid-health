@@ -59,8 +59,9 @@ void LineGraph_p::paint(QPainter *painter)
     float calculatedValue = 0;
     float calculatedTimeSeconds = 0;
     for(int i = 0; i < j; i++) {
-        calculatedTimeSeconds = (m_filedata[i].x() - minTime)/timeDelta;
-        calculatedValue = 1 - (m_filedata[i].y() - minValue)/valueDelta;
+        // a range of equal values or of one instant goes in the middle (no division by 0)
+        calculatedTimeSeconds = timeDelta > 0 ? (m_filedata[i].x() - minTime)/timeDelta : 0.5f;
+        calculatedValue = valueDelta > 0 ? 1 - (m_filedata[i].y() - minValue)/valueDelta : 0.5f;
         points[i] = QPointF(m_lineWidth + calculatedTimeSeconds*(width()-2*m_lineWidth), m_lineWidth + calculatedValue*(height()-2*m_lineWidth)); //these +2 -1 are here to make sure that the graph fits within the drawn area, as it will be clipped by qt if it doesn't.
     }
     QPen pen;
