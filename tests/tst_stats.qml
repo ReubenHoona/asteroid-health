@@ -48,6 +48,16 @@ TestCase {
         compare(r.max, 159)
     }
 
+    function test_restingWindowEdge() {
+        // 30 minutes is [t, t + 1800): every 15 minutes never has 3 (as the
+        // launcher's tile, HealthLog::restingRate)
+        var t = at(2026, 10, 20, 9, 0)
+        var every15 = [pt(t, 50), pt(t + 900, 50), pt(t + 1800, 90), pt(t + 2700, 90)]
+        compare(S.heartRateDay(every15, day(2026, 10, 20), 48).resting, -1)
+        var every1459 = [pt(t, 50), pt(t + 899, 50), pt(t + 1798, 90), pt(t + 2697, 90)]
+        compare(S.heartRateDay(every1459, day(2026, 10, 20), 48).resting, 63)
+    }
+
     function test_restingTooFew() {
         // two readings in any 30 minutes: no resting rate
         var data = [pt(at(2026, 10, 20, 9, 0), 60), pt(at(2026, 10, 20, 9, 20), 61),

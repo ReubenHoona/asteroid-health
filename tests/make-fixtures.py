@@ -6,7 +6,9 @@
 # HOME/.asteroid-sensorlogd for the host tests, in the local time zone of
 # the run (TZ), dated relative to today:
 #   today      heart rate every 10 minutes up to 5 minutes ago, a workout
-#              in the morning (every minute), not worn for an hour; steps
+#              in the morning (every minute), not worn for an hour, and
+#              lines no reader may count (garbage, off the wrist, out of
+#              range, one from the day before); steps
 #   today-1    a full day; 8 2xx steps
 #   today-2    nothing (not worn)
 #   today-3    heart rate 10:00-18:00 with malformed lines in the file
@@ -97,7 +99,9 @@ def write(d, day, lines):
 
 D = [today - timedelta(days=i) for i in range(7)]
 recent = int(now - 300)
-write(hr_dir, D[0], hr_day(D[0], until=recent, workout=(7.0, 7.67), gap=(12.5, 13.5)) + ["%d:%d" % (recent, 100)])
+write(hr_dir, D[0], ["%d:40" % (local(D[0], 0) - 600), "garbage", "%d:0" % local(D[0], 3), "%d:300" % local(D[0], 4),
+                     "%d:x" % local(D[0], 5), ":61", "%d:24" % local(D[0], 5, 30)]
+      + hr_day(D[0], until=recent, workout=(7.0, 7.67), gap=(12.5, 13.5)) + ["%d:%d" % (recent, 100)])
 write(st_dir, D[0], steps_day(D[0], 6240, until=recent))
 write(hr_dir, D[1], hr_day(D[1], workout=(18.0, 18.75)))
 write(st_dir, D[1], steps_day(D[1], 8240))
