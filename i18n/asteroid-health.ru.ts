@@ -161,5 +161,13 @@
         <source>Goal of %1 reached</source>
         <translation type="unfinished">Цель %1 достигнута</translation>
     </message>
+    <message id="id-steps-of-goal">
+        <source>of %1 steps</source>
+        <translation type="unfinished">из %1 шагов</translation>
+    </message>
+    <message id="id-steps-average">
+        <source>Average %1 steps</source>
+        <translation type="unfinished">В среднем %1 шагов</translation>
+    </message>
 </context>
 </TS>

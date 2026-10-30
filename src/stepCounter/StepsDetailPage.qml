@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2023 Arseniy Movshev <dodoradio@outlook.com>
+ *               2026 Reuben Horner <reubarb.scons@gmail.com>
  *               2019 Florent Revest <revestflo@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,175 +23,322 @@ import org.asteroid.controls
 import org.asteroid.sensorlogd
 
 import "../graphs"
+import "../data/HealthStats.js" as Stats
 
+// The steps of a day, as the stock Fitbit steps view: the day's count and
+// how far it is to the goal, the steps of every hour, and the last seven
+// days with the goal line (a day without data keeps its place). The day
+// before or after: the arrows next to the date, or a swipe across the day.
 Item {
     id: root
     property date currentDay: new Date()
+    property date today: new Date()
+    property date weekEnd: currentDay
+    property var day: Stats.stepsDay([], currentDay)
+    property int dayTotal: 0
+    property var week: []
+    property var weekTicks: [0, 5000, 10000]
+    property int weekSelected: 6
+    property int weekAverage: -1
+    readonly property bool isToday: Stats.daysBetween(currentDay, today) === 0
+    // the user's goal, else the stock default (read when the page opens)
+    property int goal: Stats.DEFAULT_STEP_GOAL
+    property bool logging: true
+    property var cache: ({})
+
+    StepsDataLoader {
+        id: stepsDataLoader
+        Component.onCompleted: triggerDaemonRecording()
+        onDataChanged: {
+            delete root.cache[Stats.dayKey(new Date())]
+            delete root.cache[Stats.dayKey(Stats.addDays(new Date(), -1))]
+            root.reload()
+        }
+        onTodayTotalChanged: if (root.isToday) root.dayTotal = root.totalOf(root.currentDay, root.day)
+    }
+
+    function summaryOf(d) {
+        var key = Stats.dayKey(d)
+        if (cache[key] === undefined)
+            cache[key] = Stats.stepsDay(stepsDataLoader.getDataForDate(Stats.addDays(d, 0)), d)
+        return cache[key]
+    }
+
+    // today: the live count when it is ahead of the log
+    function totalOf(d, s) {
+        return Stats.daysBetween(d, today) === 0 ? Math.max(s.total, stepsDataLoader.todayTotal) : s.total
+    }
+
+    function reload() {
+        day = summaryOf(currentDay)
+        dayTotal = totalOf(currentDay, day)
+        var first = Stats.addDays(weekEnd, -6)
+        var days = []
+        var hi = goal
+        var sum = 0
+        var counted = 0
+        for (var i = 0; i < 7; i++) {
+            var d = Stats.addDays(first, i)
+            var s = summaryOf(d)
+            var total = totalOf(d, s)
+            var hasData = s.count > 0 || total > 0
+            days.push({ label: d.toLocaleDateString(Qt.locale(), "ddd"), hasData: hasData, lo: 0, hi: total, mark: -1 })
+            hi = Math.max(hi, total)
+            if (hasData) {
+                sum += total
+                counted++
+            }
+        }
+        weekTicks = Stats.stepsAxis(hi).ticks
+        week = days
+        weekSelected = Stats.daysBetween(first, currentDay)
+        weekAverage = counted ? Math.round(sum / counted) : -1
+    }
+
+    function showDay(d) {
+        if (Stats.daysBetween(d, today) < 0)
+            return
+        currentDay = Stats.addDays(d, 0)
+        if (Stats.daysBetween(weekEnd, currentDay) > 0) {
+            var end = Stats.addDays(currentDay, 6)
+            weekEnd = Stats.daysBetween(end, today) < 0 ? Stats.addDays(today, 0) : end
+        } else if (Stats.daysBetween(currentDay, Stats.addDays(weekEnd, -6)) > 0) {
+            weekEnd = currentDay
+        }
+        reload()
+        dayFade.restart()
+    }
+
+    function hourBars() {
+        var bars = []
+        for (var h = 0; h < 24; h++)
+            bars.push(day.hours[h] > 0 ? { lo: 0, hi: day.hours[h] } : null)
+        return bars
+    }
+
+    function maxHour() {
+        return Math.max.apply(null, day.hours)
+    }
+
+    function noDataText() {
+        if (!logging)
+            //% "Step logging is off"
+            return qsTrId("id-steps-logging-off")
+        if (isToday)
+            //% "Nothing logged yet today"
+            return qsTrId("id-nothing-yet-today")
+        //% "Watch not worn"
+        return qsTrId("id-not-worn")
+    }
+
+    Component.onCompleted: {
+        if (loggerSettings.stepGoalEnabled && loggerSettings.stepGoalTarget > 0)
+            goal = loggerSettings.stepGoalTarget
+        logging = loggerSettings.stepCounterEnabled
+        currentDay = Stats.addDays(currentDay, 0)
+        // the week of the overview's chart (the last 7 days) if it holds the day
+        weekEnd = Stats.daysBetween(currentDay, today) <= 6 ? Stats.addDays(today, 0) : currentDay
+        reload()
+    }
+
+    Timer {
+        interval: 60000
+        running: true
+        repeat: true
+        onTriggered: {
+            var wasToday = root.isToday
+            root.today = new Date()
+            if (wasToday && !root.isToday)
+                root.reload()
+        }
+    }
+
+    // three screens: the day at a glance, the day's hours, the week
     Flickable {
         anchors.fill: parent
-        contentHeight: contentColumn.implicitHeight
+        contentHeight: contentColumn.height
         Column {
             id: contentColumn
             width: parent.width
 
-            Item { width: parent.width; height: parent.width*0.2}
+            DaySwipeArea {
+                width: parent.width
+                height: root.height
+                onPrevious: root.showDay(Stats.addDays(root.currentDay, -1))
+                onNext: root.showDay(Stats.addDays(root.currentDay, 1))
 
-            Label {
-                width: parent.width*0.8
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: dateCompare(stepsLineGraph.startTime,new Date()) ?
-                    (stepsDataLoader.getTodayTotal() ?
-                        //% "You've walked %1 steps today, keep it up!"
-                        //: %1 is the number of steps
-                        qsTrId("id-steps-walked-today").arg(stepsDataLoader.todayTotal) :
-                        //% "You haven't yet logged any steps today"
-                        qsTrId("id-no-steps-today")) :
-                    //% "You walked %1 steps on this day"
-                    //: %1 is the number of steps
-                    qsTrId("id-steps-walked-on-day").arg(stepsDataLoader.getTotalForDate(stepsLineGraph.startTime))
-                wrapMode: Text.WordWrap
-                horizontalAlignment: Text.AlignHCenter
-                visible: dateCompare(stepsLineGraph.startTime,stepsLineGraph.endTime)
-            }
+                Column {
+                    id: glance
+                    width: parent.width
+                    y: Math.max(Dims.h(8), (parent.height - height) / 2 - Dims.h(3))
+                    readonly property bool hasData: root.day.count > 0 || root.dayTotal > 0
 
-            Item { width: parent.width; height: parent.width*0.1; visible: dateCompare(stepsLineGraph.startTime,stepsLineGraph.endTime)}
-            Label {
-                anchors {
-                    left: parent.left
-                    margins: app.width*0.1
-                }
-                //% "Steps"
-                text: qsTrId("id-steps")
-            }
-
-            Item { width: parent.width; height: parent.width*0.05}
-
-            BarGraph {
-                id: stepsGraph
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: parent.width*0.85
-                height: app.width*3/5
-                property date selectedTime: stepsLineGraph.startTime
-                StepsDataLoader {
-                    id: stepsDataLoader
-                    Component.onCompleted: {
-                        triggerDaemonRecording()
-                        stepsGraph.loadData()
-                    }
-                    onDataChanged: stepsGraph.loadData()
-                }
-                function loadData() {
-                    valuesArr = []
-                    labelsArr = []
-                    colorsArr = []
-                    var currDate = new Date()
-                    currDate.setDate(currDate.getDate() - 7)
-                    for (var i = 0; i < 7; i++) {
-                        currDate.setDate(currDate.getDate() + 1)
-                        console.log(currDate)
-                        var currvalue = stepsDataLoader.getTotalForDate(currDate)
-                        if (currvalue > 0 || valuesArr.length > 0) {
-                            if (currvalue > maxValue) {
-                                maxValue = currvalue
-                            }
-                            valuesArr.push(currvalue)
-                            const day = currDate.toLocaleString(Qt.locale(), "ddd")
-                            labelsArr.push(day)
-                            if(dateCompare(currDate,stepsLineGraph.startTime) && dateCompare(currDate, stepsLineGraph.endTime)) {
-                                colorsArr.push("#FFF")
-                            } else {
-                                colorsArr.push("#AAA")
-                            }
+                    Label {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        //% "Steps"
+                        text: qsTrId("id-steps")
+                        font {
+                            styleName: "SemiCondensed Light"
+                            pixelSize: Dims.l(7)
                         }
                     }
-                    indicatorLineColor = interpolateColors(Qt.rgba(1,0,0,1),Qt.rgba(0.06,1,0.11,1),clamp(stepsDataLoader.getTotalForDate(stepsLineGraph.startTime)/loggerSettings.stepGoalTarget,0,1))
-                    dataLoadingDone()
-                }
-                indicatorLineHeight: loggerSettings.stepGoalEnabled ? loggerSettings.stepGoalTarget : 0
-                onBarClicked: (index)=> {
-                    var d = new Date()
-                    d.setDate(d.getDate() - valuesArr.length + 1 + index)
-                    stepsLineGraph.startTime = d
-                    stepsLineGraph.endTime = d
-                    loadData()
+
+                    DayNavigator {
+                        id: nav
+                        width: parent.width
+                        day: root.currentDay
+                        today: root.today
+                        onPrevious: root.showDay(Stats.addDays(root.currentDay, -1))
+                        onNext: root.showDay(Stats.addDays(root.currentDay, 1))
+                    }
+
+                    Column {
+                        width: parent.width
+                        NumberAnimation on opacity { id: dayFade; from: 0.3; to: 1; duration: 150; running: false }
+
+                        Item { width: parent.width; height: Dims.h(2) }
+
+                        Row {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            spacing: Dims.l(2)
+                            visible: glance.hasData
+                            Icon {
+                                name: "ios-walk"
+                                width: Dims.l(9)
+                                height: width
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            Label {
+                                text: root.dayTotal.toLocaleString(Qt.locale(), "f", 0)
+                                font.pixelSize: Dims.l(15)
+                            }
+                        }
+                        Label {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            visible: glance.hasData
+                            text: root.dayTotal >= root.goal ?
+                                //% "Goal of %1 reached"
+                                //: %1 is the daily step goal
+                                qsTrId("id-steps-goal-reached").arg(root.goal.toLocaleString(Qt.locale(), "f", 0)) :
+                                //% "of %1 steps"
+                                //: %1 is the daily step goal
+                                qsTrId("id-steps-of-goal").arg(root.goal.toLocaleString(Qt.locale(), "f", 0))
+                            font.pixelSize: Dims.l(5.5)
+                            opacity: 0.8
+                        }
+                        Item { width: parent.width; height: Dims.h(5); visible: glance.hasData }
+                        // how far to the goal
+                        Rectangle {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            visible: glance.hasData
+                            width: Dims.w(56)
+                            height: Dims.l(2)
+                            radius: height / 2
+                            color: "#33FFFFFF"
+                            Rectangle {
+                                width: Math.max(parent.height, parent.width * Math.min(1, root.dayTotal / root.goal))
+                                height: parent.height
+                                radius: height / 2
+                                color: root.dayTotal >= root.goal ? "#10FF1C" : "#FFFFFF"
+                            }
+                        }
+
+                        // nothing logged that day
+                        Item { width: parent.width; height: Dims.h(4); visible: !glance.hasData }
+                        Label {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            visible: !glance.hasData
+                            //% "No data"
+                            text: qsTrId("id-no-data")
+                            font.pixelSize: Dims.l(9)
+                        }
+                        Label {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            width: Dims.w(70)
+                            horizontalAlignment: Text.AlignHCenter
+                            wrapMode: Text.WordWrap
+                            visible: !glance.hasData
+                            text: root.noDataText()
+                            font.pixelSize: Dims.l(5.5)
+                            opacity: 0.8
+                        }
+                    }
                 }
             }
 
-            Item { width: parent.width; height: parent.width*0.2}
+            // the day: the steps of every hour, this hour brightest
+            DaySwipeArea {
+                width: parent.width
+                height: root.height
+                visible: root.day.count > 0
+                onPrevious: root.showDay(Stats.addDays(root.currentDay, -1))
+                onNext: root.showDay(Stats.addDays(root.currentDay, 1))
 
-            Label {
-                anchors {
-                    left: parent.left
-                    margins: app.width*0.1
-                }
-                text: stepsLineGraph.startTime.toLocaleDateString()
-            }
-
-            StepsLineGraph {
-                id: stepsLineGraph
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: parent.width*0.9
-                height: app.height*2/3
-                startTime: root.currentDay
-                endTime: root.currentDay
-            }
-            Row {
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: parent.width*0.9
-                height: width/6
-                MouseArea {
-                    height: parent.height
-                    width: parent.width/3
+                Column {
+                    width: parent.width
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: Dims.h(3)
                     Label {
-                        anchors.centerIn: parent
-                        //% "3 weeks"
-                        text: qsTrId("id-3-weeks")
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: nav.dayName(root.currentDay)
+                        font.pixelSize: Dims.l(6)
                     }
-                    onClicked: {
-                        var d = stepsLineGraph.endTime
-                        d.setDate(d.getDate() - 20)
-                        stepsLineGraph.startTime = d
-                        stepsGraph.loadData()
-                    }
-                }
-                MouseArea {
-                    height: parent.height
-                    width: parent.width/3
-                    Label {
-                        anchors.centerIn: parent
-                        //% "week"
-                        text: qsTrId("id-week")
-                    }
-                    onClicked: {
-                        var d = stepsLineGraph.endTime
-                        d.setDate(d.getDate() - 6)
-                        stepsLineGraph.startTime = d
-                        stepsGraph.loadData()
-                    }
-                }
-                MouseArea {
-                    height: parent.height
-                    width: parent.width/3
-                    Label {
-                        anchors.centerIn: parent
-                        //% "day"
-                        text: qsTrId("id-day")
-                    }
-                    onClicked: {
-                        stepsLineGraph.startTime = stepsLineGraph.endTime
-                        stepsGraph.loadData()
+                    DayChart {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: Dims.w(80)
+                        height: Dims.h(42)
+                        day: root.currentDay
+                        capped: false
+                        bars: root.day.count > 0 ? root.hourBars() : []
+                        ticks: Stats.stepsAxis(root.day.count > 0 ? root.maxHour() : 1).ticks
+                        highlight: root.isToday ? root.today.getHours() : -1
                     }
                 }
             }
 
-            Item { width: parent.width; height: parent.width*0.2}
+            // the week: each day's steps and the goal line
+            Item {
+                width: parent.width
+                height: root.height
+
+                Column {
+                    width: parent.width
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: Dims.h(3)
+
+                    Label {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: Stats.daysBetween(root.weekEnd, root.today) === 0 ?
+                            //% "Last 7 days"
+                            qsTrId("id-last-7-days") :
+                            Stats.addDays(root.weekEnd, -6).toLocaleDateString(Qt.locale(), "d MMM") + " – " + root.weekEnd.toLocaleDateString(Qt.locale(), "d MMM")
+                        font.pixelSize: Dims.l(6)
+                    }
+
+                    WeekChart {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: Dims.w(80)
+                        height: Dims.h(40)
+                        days: root.week
+                        ticks: root.weekTicks
+                        selected: root.weekSelected
+                        goal: root.goal
+                        capped: false
+                        markColor: "#10FF1C"
+                        onDayClicked: (index) => root.showDay(Stats.addDays(root.weekEnd, index - 6))
+                    }
+
+                    Label {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        visible: root.weekAverage >= 0
+                        //% "Average %1 steps"
+                        //: %1 is a number of steps
+                        text: qsTrId("id-steps-average").arg(root.weekAverage.toLocaleString(Qt.locale(), "f", 0))
+                        font.pixelSize: Dims.l(4.5)
+                        opacity: 0.8
+                    }
+                }
+            }
         }
-    }
-    function dateCompare(date1, date2) {
-        return (date1.getFullYear() == date2.getFullYear()) && (date1.getMonth() == date2.getMonth()) && (date1.getDate() == date2.getDate())
-    }
-    PageHeader {
-        //% "Steps"
-        text: qsTrId("id-steps")
     }
 }

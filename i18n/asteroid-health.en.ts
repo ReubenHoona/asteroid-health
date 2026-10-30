@@ -165,5 +165,13 @@
         <source>Goal of %1 reached</source>
         <translation>Goal of %1 reached</translation>
     </message>
+    <message id="id-steps-of-goal">
+        <source>of %1 steps</source>
+        <translation>of %1 steps</translation>
+    </message>
+    <message id="id-steps-average">
+        <source>Average %1 steps</source>
+        <translation>Average %1 steps</translation>
+    </message>
 </context>
 </TS>
