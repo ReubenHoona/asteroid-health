@@ -22,13 +22,14 @@ import org.asteroid.controls
 import org.asteroid.sensorlogd
 
 Item {
-    PageHeader {
-        text: "Settings"
-        z: 5
-    }
     Flickable {
         anchors.fill: parent
         contentHeight: contentColumn.implicitHeight
+        // the title scrolls away with the page, as a Wear OS list header
+        PageHeader {
+            text: "Settings"
+            z: 5
+        }
         Column {
             id: contentColumn
             anchors.fill: parent

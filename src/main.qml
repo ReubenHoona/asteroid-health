@@ -43,17 +43,17 @@ Application {
         anchors.fill: parent
         firstPage: Component {
             Item {
-                PageHeader {
-                    id: title
-                    //% "Overview"
-                    text: qsTrId("id-overview")
-                    z: 5
-                }
-
                 Flickable {
                     z: 1
                     anchors.fill: parent
                     contentHeight: contentColumn.implicitHeight
+                    // the title scrolls away with the page, as a Wear OS list header
+                    PageHeader {
+                        id: title
+                        //% "Overview"
+                        text: qsTrId("id-overview")
+                        z: 5
+                    }
                     Column {
                         id: contentColumn
                         anchors.fill: parent

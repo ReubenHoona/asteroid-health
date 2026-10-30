@@ -23,14 +23,15 @@ import Nemo.Configuration
 import org.asteroid.sensorlogd
 
 Item {
-    PageHeader {
-        //% "UI Settings"
-        text: qsTrId("id-ui-settings-title")
-        z: 5
-    }
     Flickable {
         anchors.fill: parent
         contentHeight: contentColumn.implicitHeight
+        // the title scrolls away with the page, as a Wear OS list header
+        PageHeader {
+            //% "UI Settings"
+            text: qsTrId("id-ui-settings-title")
+            z: 5
+        }
         Column {
             id: contentColumn
             anchors.fill: parent
