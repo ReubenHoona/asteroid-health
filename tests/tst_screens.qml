@@ -460,6 +460,35 @@ Item {
             }
         }
 
+        // the launcher's heart rate tile: a recent request opens the heart
+        // rate page on today (also over another page), an old one does not
+        function test_8_openRequest() {
+            startApp()
+            var stack = find(app, "LayerStack")
+            var request = null
+            for (var i = 0; i < app.resources.length; i++)
+                if (app.resources[i].key === "/org/asteroidos/health/ui/open")
+                    request = app.resources[i]
+            verify(request, "the request key")
+            request.value = "heartrate@" + Date.now()
+            var page = currentPage("HeartrateDetailPage")
+            compare(find(page, "DayNavigator").dayName(page.currentDay), "Today")
+            tryCompare(request, "value", "")
+            tapArrow(page, true)
+            request.value = "heartrate@" + Date.now()
+            wait(300)
+            page = currentPage("HeartrateDetailPage")
+            compare(stack.layers.length, 1)
+            compare(find(page, "DayNavigator").dayName(page.currentDay), "Today")
+            stack.pop(stack.currentLayer)
+            request.value = "heartrate@" + (Date.now() - 120000)
+            wait(600)
+            compare(stack.layers.length, 0)
+            request.value = "steps@" + Date.now()
+            wait(600)
+            compare(stack.layers.length, 0)
+        }
+
         function test_3_overviewWeekTap() {
             startApp()
             var preview = find(app, "StepCounterPreview")

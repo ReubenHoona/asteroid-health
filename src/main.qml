@@ -111,4 +111,36 @@ Application {
         RootSettingsPage {
         }
     }
+
+    // The launcher's heart rate tile opens the heart rate page on today, as
+    // the stock tile opens the heart rate app: before it launches (or
+    // raises) this app it sets this key to "heartrate@<time in ms>"
+    ConfigurationValue {
+        id: openRequest
+        key: "/org/asteroidos/health/ui/open"
+        defaultValue: ""
+        onValueChanged: Qt.callLater(app.openRequested)
+    }
+    Component {
+        id: heartratePage
+        HeartrateDetailPage {
+        }
+    }
+    function openRequested() {
+        var request = String(openRequest.value || "")
+        if (request === "")
+            return
+        openRequest.value = ""
+        var at = request.lastIndexOf("@")
+        var age = Date.now() - Number(request.substring(at + 1))
+        // an old request (the app started later some other way): ignored
+        if (at < 0 || !(age > -5000 && age < 60000))
+            return
+        if (request.substring(0, at) === "heartrate") {
+            while (pageStack.layers.length > 0)
+                pageStack.pop(pageStack.currentLayer)
+            pageStack.push(heartratePage)
+        }
+    }
+    Component.onCompleted: Qt.callLater(openRequested)
 }
