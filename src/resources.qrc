@@ -21,6 +21,7 @@
         <file>graphs/DayNavigator.qml</file>
         <file>graphs/WeekChart.qml</file>
         <file>graphs/DaySwipeArea.qml</file>
+        <file>graphs/SectionFlickable.qml</file>
         <file>data/HealthStats.js</file>
     </qresource>
 </RCC>

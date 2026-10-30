@@ -153,10 +153,13 @@ Item {
         }
     }
 
-    // three screens: the day at a glance, the day's hours, the week
-    Flickable {
+    // three screens: the day at a glance, the day's hours, the week; the
+    // page rests on one of them
+    SectionFlickable {
+        id: flick
         anchors.fill: parent
         contentHeight: contentColumn.height
+        sections: contentColumn
         Column {
             id: contentColumn
             width: parent.width
