@@ -107,9 +107,9 @@ Item {
                 img.save(shots + "/" + name + ".png")
         }
 
-        // every text fully inside the screen's height: inside the circle, and
-        // over no other text
-        function checkTexts(page, name) {
+        // every text fully inside the screen's height: inside the circle (not
+        // while scrolling: overlapOnly), and over no other text
+        function checkTexts(page, name, overlapOnly) {
             var texts = findAll(page, function(o) {
                 return o.text !== undefined && o.contentWidth !== undefined && typeof o.text === "string"
                         && o.text.length > 0 && visibleOnScreen(o)
@@ -123,12 +123,16 @@ Item {
                          t.verticalAlignment === Text.AlignBottom ? t.height - t.contentHeight : 0
                 var p = t.mapToItem(screen, dx, dy)
                 var r = { x: p.x, y: p.y, w: Math.min(t.contentWidth, t.width > 0 ? t.width : t.contentWidth), h: t.contentHeight, text: t.text }
-                if (r.y < 0 || r.y + r.h > 384)
+                if (r.y < 0 || r.y + r.h > 384) {
+                    // partly off the screen: still never over another text
+                    if (overlapOnly && r.y + r.h > 0 && r.y < 384)
+                        rects.push(r)
                     continue
+                }
                 // the glyphs leave some room at the top and bottom of the line
                 var inset = r.h * 0.2
                 var corners = [[r.x, r.y + inset], [r.x + r.w, r.y + inset], [r.x, r.y + r.h - inset], [r.x + r.w, r.y + r.h - inset]]
-                for (var c = 0; c < 4; c++) {
+                for (var c = 0; c < (overlapOnly ? 0 : 4); c++) {
                     var ddx = corners[c][0] - 192
                     var ddy = corners[c][1] - 192
                     if (ddx * ddx + ddy * ddy > 190 * 190) {
@@ -201,25 +205,78 @@ Item {
             return p
         }
 
-        // each screen of the page at rest: the top, the day chart, the week
+        // a finger drag up (dy < 0) or down of about 290 px over 500 ms, as on
+        // the watch; halfway: no text over another (mid-scroll), shot midName
+        function fingerDrag(root, dy, midName) {
+            var x = 192, y = dy < 0 ? 300 : 84
+            mousePress(screen, x, y)
+            for (var i = 1; i <= 15; i++) {
+                mouseMove(screen, x, y + dy * i / 15, 33, Qt.LeftButton)
+                if (i === 8 && midName) {
+                    checkTexts(root, midName, true)
+                    shot(midName)
+                }
+            }
+            mouseRelease(screen, x, y + dy)
+        }
+
+        // crown detents (RotaryInput: 24 counts of 120 each): > 0 down the page
+        function crown(detents) {
+            for (var i = 0; i < Math.abs(detents); i++) {
+                mouseWheel(screen, 192, 192, 0, detents > 0 ? -2880 : 2880)
+                wait(60)
+            }
+        }
+
+        // the page comes to rest on section i
+        function settlesOn(flick, i, what) {
+            wait(600)
+            var ys = flick.stops()
+            compare(flick.current, i, what + ": section")
+            compare(Math.round(flick.contentY), Math.round(ys[i]), what + ": contentY " + flick.contentY + " stops " + ys)
+        }
+
+        // each screen of the page at rest, reached by finger drags (one section
+        // each) and back by the crown: the top, the day chart, the week
         function screens(page, prefix) {
-            var flick = find(page, "QQuickFlickable")
+            var flick = find(page, "SectionFlickable")
             verify(flick)
-            scrollTo(flick, 0)
+            flick.snapTo(0, false)
+            wait(50)
             verify(checkTexts(page, prefix + "-top") > 2)
             shot(prefix + "-top")
+            var n = flick.stops().length
             var chart = find(page, "DayChart")
-            if (chart && sectionOf(chart, flick).visible) {
-                scrollTo(flick, sectionOf(chart, flick).y)
-                checkTexts(page, prefix + "-chart")
-                shot(prefix + "-chart")
+            var hasChart = chart && sectionOf(chart, flick).visible
+            compare(n, hasChart ? 3 : 2)
+            fingerDrag(page, -290, prefix + "-mid1")
+            settlesOn(flick, 1, prefix + " drag 1")
+            checkTexts(page, prefix + (hasChart ? "-chart" : "-week"))
+            shot(prefix + (hasChart ? "-chart" : "-week"))
+            if (hasChart) {
+                fingerDrag(page, -290, prefix + "-mid2")
+                settlesOn(flick, 2, prefix + " drag 2")
+                checkTexts(page, prefix + "-week")
+                shot(prefix + "-week")
+                // past the end: stays on the week
+                fingerDrag(page, -290)
+                settlesOn(flick, 2, prefix + " drag past the end")
             }
-            var week = find(page, "WeekChart")
-            scrollTo(flick, sectionOf(week, flick).y)
-            compare(flick.contentY, sectionOf(week, flick).y)
-            checkTexts(page, prefix + "-week")
-            shot(prefix + "-week")
-            scrollTo(flick, 0)
+            // the crown: one detent goes back to where it was, two go a section
+            crown(-1)
+            settlesOn(flick, n - 1, prefix + " crown 1 detent")
+            crown(-2)
+            settlesOn(flick, n - 2, prefix + " crown 2 detents")
+            if (hasChart) {
+                // a short drag goes back to the section it started from
+                fingerDrag(page, -90)
+                settlesOn(flick, 1, prefix + " short drag")
+                crown(-2)
+                settlesOn(flick, 0, prefix + " crown to the top")
+            }
+            // a drag down at the top stays there
+            fingerDrag(page, 290)
+            settlesOn(flick, 0, prefix + " drag down at the top")
         }
 
         // a sideways swipe across the day at a glance
@@ -227,7 +284,7 @@ Item {
             var area = find(page, "DaySwipeArea")
             verify(area.children[0].blocksBackSwipe)
             mouseDrag(area, right ? 100 : 280, 250, right ? 180 : -180, 0, Qt.LeftButton, Qt.NoModifier, 30)
-            wait(300)
+            wait(400)
         }
 
         function tapArrow(page, back) {
@@ -250,10 +307,18 @@ Item {
             verify(page.day.count > 100)
             screens(page, "hr-yesterday")
 
-            tapArrow(page, true)     // today-2: not worn
+            // on the chart screen, a swipe to a day without a chart: the page
+            // goes to the glance of that day
+            var flick = find(page, "SectionFlickable")
+            fingerDrag(page, -290)
+            settlesOn(flick, 1, "chart of yesterday")
+            mouseDrag(screen, 100, 192, 180, 0, Qt.LeftButton, Qt.NoModifier, 30)   // today-2: not worn
+            wait(400)
             compare(page.day.count, 0)
+            settlesOn(flick, 0, "no chart: the glance")
             checkTexts(page, "hr-nodata")
             shot("hr-nodata-top")
+            screens(page, "hr-nodata")
 
             tapArrow(page, true)     // today-3: the file with malformed lines
             compare(page.day.count, 48)
@@ -313,6 +378,86 @@ Item {
             compare(find(page, "DayNavigator").dayName(page.currentDay), "Yesterday")
             mouseDrag(screen, 6, 192, 260, 0, Qt.LeftButton, Qt.NoModifier, 30)
             tryCompare(stack, "layers", [], 3000)
+        }
+
+        // the Overview scrolls freely; its title goes with it and nothing is
+        // ever drawn over it
+        function test_5_overviewScroll() {
+            startApp()
+            var stack = find(app, "LayerStack")
+            var flick = flickableOf(find(app, "StepCounterPreview"))
+            var title = find(app, "PageHeader")
+            compare(flick.contentY, 0)
+            fingerDrag(stack, -290, "overview-mid1")
+            wait(800)
+            verify(flick.contentY > 100)
+            verify(title.mapToItem(screen, 0, 0).y < -100)
+            checkTexts(stack, "overview-scrolled", true)
+            shot("overview-scrolled")
+            fingerDrag(stack, -290, "overview-mid2")
+            wait(800)
+            checkTexts(stack, "overview-scrolled2", true)
+            shot("overview-scrolled2")
+        }
+
+        // a quick short fling goes a section on; a long fast crown turn
+        // scrolls on and still comes to rest on a section
+        function test_6_flingAndCrown() {
+            startApp()
+            var page = openFromOverview("HeartratePreview", "HeartrateDetailPage")
+            var flick = find(page, "SectionFlickable")
+            mousePress(screen, 192, 300)
+            for (var i = 1; i <= 4; i++)
+                mouseMove(screen, 192, 300 - 30 * i, 16, Qt.LeftButton)
+            mouseRelease(screen, 192, 180)
+            settlesOn(flick, 1, "quick fling")
+            flick.snapTo(0, false)
+            crown(8)
+            wait(600)
+            var ys = flick.stops()
+            verify(flick.current > 0, "a long crown turn moves on")
+            compare(Math.round(flick.contentY), Math.round(ys[flick.current]), "rests on a section")
+            crown(-8)
+            settlesOn(flick, 0, "and back")
+        }
+
+        // the other pages with a title: it is in their Flickable and scrolls
+        // away with the page
+        function test_7_titlesScroll() {
+            startApp()
+            var stack = find(app, "LayerStack")
+            var overview = flickableOf(find(app, "StepCounterPreview"))
+            overview.contentY = overview.contentHeight - overview.height
+            wait(300)
+            var items = findAll(app, function(o) { return o.title === "Settings" && o.clicked !== undefined })
+            compare(items.length, 1)
+            mouseClick(items[0])
+            var pages = ["RootSettingsPage", "UiSettingsPage", "LoggerSettingsPage"]
+            var titles = ["UI settings", "Logger settings"]
+            for (var i = 0; i < pages.length; i++) {
+                var page = currentPage(pages[i])
+                var header = find(page, "PageHeader")
+                var flick = find(page, "QQuickFlickable")
+                verify(header && flick, pages[i])
+                compare(header.parent, flick.contentItem, pages[i] + ": the title scrolls with the page")
+                checkTexts(page, pages[i])
+                shot("title-" + pages[i])
+                if (i === 0) {
+                    var open = findAll(page, function(o) { return o.title === titles[0] && o.clicked !== undefined })
+                    mouseClick(open[0])
+                } else if (i === 1) {
+                    stack.pop(stack.currentLayer)
+                    wait(500)
+                    var open2 = findAll(stack.currentLayer, function(o) { return o.title === titles[1] && o.clicked !== undefined })
+                    mouseClick(open2[0])
+                }
+            }
+            // the rest compile (the weight page is off by default)
+            var urls = ["../src/weight/WeightDetailPage.qml", "../src/SettingsPage.qml"]
+            for (var u = 0; u < urls.length; u++) {
+                var c = Qt.createComponent(Qt.resolvedUrl(urls[u]))
+                compare(c.status, Component.Ready, urls[u] + " " + c.errorString())
+            }
         }
 
         function test_3_overviewWeekTap() {
