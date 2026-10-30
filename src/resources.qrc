@@ -17,5 +17,6 @@
         <file>graphs/LineGraph.qml</file>
         <file>graphs/TimeLabels.qml</file>
         <file>graphs/VerticalLabels.qml</file>
+        <file>data/HealthStats.js</file>
     </qresource>
 </RCC>
