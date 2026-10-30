@@ -109,5 +109,61 @@
         <source>Yesterday</source>
         <translation>Yesterday</translation>
     </message>
+    <message id="id-hr-last-at">
+        <source>Last at %1</source>
+        <translation>Last at %1</translation>
+    </message>
+    <message id="id-hr-just-now">
+        <source>Just now</source>
+        <translation>Just now</translation>
+    </message>
+    <message id="id-hr-min-ago">
+        <source>%1 min ago</source>
+        <translation>%1 min ago</translation>
+    </message>
+    <message id="id-hr-logging-off">
+        <source>Heart rate logging is off</source>
+        <translation>Heart rate logging is off</translation>
+    </message>
+    <message id="id-nothing-yet-today">
+        <source>Nothing logged yet today</source>
+        <translation>Nothing logged yet today</translation>
+    </message>
+    <message id="id-not-worn">
+        <source>Watch not worn</source>
+        <translation>Watch not worn</translation>
+    </message>
+    <message id="id-bpm">
+        <source>bpm</source>
+        <translation>bpm</translation>
+    </message>
+    <message id="id-no-data">
+        <source>No data</source>
+        <translation>No data</translation>
+    </message>
+    <message id="id-range">
+        <source>Range</source>
+        <translation>Range</translation>
+    </message>
+    <message id="id-resting">
+        <source>Resting</source>
+        <translation>Resting</translation>
+    </message>
+    <message id="id-last-7-days">
+        <source>Last 7 days</source>
+        <translation>Last 7 days</translation>
+    </message>
+    <message id="id-resting-average">
+        <source>Resting, average %1</source>
+        <translation>Resting, average %1</translation>
+    </message>
+    <message id="id-steps-logging-off">
+        <source>Step logging is off</source>
+        <translation>Step logging is off</translation>
+    </message>
+    <message id="id-steps-goal-reached">
+        <source>Goal of %1 reached</source>
+        <translation>Goal of %1 reached</translation>
+    </message>
 </context>
 </TS>

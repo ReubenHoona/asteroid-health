@@ -105,5 +105,61 @@
         <source>Yesterday</source>
         <translation type="unfinished">Вчера</translation>
     </message>
+    <message id="id-hr-last-at">
+        <source>Last at %1</source>
+        <translation type="unfinished">Последнее в %1</translation>
+    </message>
+    <message id="id-hr-just-now">
+        <source>Just now</source>
+        <translation type="unfinished">Только что</translation>
+    </message>
+    <message id="id-hr-min-ago">
+        <source>%1 min ago</source>
+        <translation type="unfinished">%1 мин назад</translation>
+    </message>
+    <message id="id-hr-logging-off">
+        <source>Heart rate logging is off</source>
+        <translation type="unfinished">Запись пульса выключена</translation>
+    </message>
+    <message id="id-nothing-yet-today">
+        <source>Nothing logged yet today</source>
+        <translation type="unfinished">Сегодня ещё ничего не записано</translation>
+    </message>
+    <message id="id-not-worn">
+        <source>Watch not worn</source>
+        <translation type="unfinished">Часы не носили</translation>
+    </message>
+    <message id="id-bpm">
+        <source>bpm</source>
+        <translation type="unfinished">уд/мин</translation>
+    </message>
+    <message id="id-no-data">
+        <source>No data</source>
+        <translation type="unfinished">Нет данных</translation>
+    </message>
+    <message id="id-range">
+        <source>Range</source>
+        <translation type="unfinished">Диапазон</translation>
+    </message>
+    <message id="id-resting">
+        <source>Resting</source>
+        <translation type="unfinished">В покое</translation>
+    </message>
+    <message id="id-last-7-days">
+        <source>Last 7 days</source>
+        <translation type="unfinished">Последние 7 дней</translation>
+    </message>
+    <message id="id-resting-average">
+        <source>Resting, average %1</source>
+        <translation type="unfinished">В покое, в среднем %1</translation>
+    </message>
+    <message id="id-steps-logging-off">
+        <source>Step logging is off</source>
+        <translation type="unfinished">Запись шагов выключена</translation>
+    </message>
+    <message id="id-steps-goal-reached">
+        <source>Goal of %1 reached</source>
+        <translation type="unfinished">Цель %1 достигнута</translation>
+    </message>
 </context>
 </TS>

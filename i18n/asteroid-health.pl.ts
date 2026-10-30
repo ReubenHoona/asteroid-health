@@ -105,5 +105,61 @@
         <source>Yesterday</source>
         <translation type="unfinished">Wczoraj</translation>
     </message>
+    <message id="id-hr-last-at">
+        <source>Last at %1</source>
+        <translation type="unfinished">Ostatni o %1</translation>
+    </message>
+    <message id="id-hr-just-now">
+        <source>Just now</source>
+        <translation type="unfinished">Przed chwilą</translation>
+    </message>
+    <message id="id-hr-min-ago">
+        <source>%1 min ago</source>
+        <translation type="unfinished">%1 min temu</translation>
+    </message>
+    <message id="id-hr-logging-off">
+        <source>Heart rate logging is off</source>
+        <translation type="unfinished">Rejestrowanie tętna wyłączone</translation>
+    </message>
+    <message id="id-nothing-yet-today">
+        <source>Nothing logged yet today</source>
+        <translation type="unfinished">Dziś jeszcze nic nie zapisano</translation>
+    </message>
+    <message id="id-not-worn">
+        <source>Watch not worn</source>
+        <translation type="unfinished">Zegarek nienoszony</translation>
+    </message>
+    <message id="id-bpm">
+        <source>bpm</source>
+        <translation type="unfinished">bpm</translation>
+    </message>
+    <message id="id-no-data">
+        <source>No data</source>
+        <translation type="unfinished">Brak danych</translation>
+    </message>
+    <message id="id-range">
+        <source>Range</source>
+        <translation type="unfinished">Zakres</translation>
+    </message>
+    <message id="id-resting">
+        <source>Resting</source>
+        <translation type="unfinished">Spoczynkowe</translation>
+    </message>
+    <message id="id-last-7-days">
+        <source>Last 7 days</source>
+        <translation type="unfinished">Ostatnie 7 dni</translation>
+    </message>
+    <message id="id-resting-average">
+        <source>Resting, average %1</source>
+        <translation type="unfinished">Spoczynkowe, średnio %1</translation>
+    </message>
+    <message id="id-steps-logging-off">
+        <source>Step logging is off</source>
+        <translation type="unfinished">Rejestrowanie kroków wyłączone</translation>
+    </message>
+    <message id="id-steps-goal-reached">
+        <source>Goal of %1 reached</source>
+        <translation type="unfinished">Cel %1 osiągnięty</translation>
+    </message>
 </context>
 </TS>

@@ -105,5 +105,61 @@
         <source>Yesterday</source>
         <translation type="unfinished">Hier</translation>
     </message>
+    <message id="id-hr-last-at">
+        <source>Last at %1</source>
+        <translation type="unfinished">Dernière à %1</translation>
+    </message>
+    <message id="id-hr-just-now">
+        <source>Just now</source>
+        <translation type="unfinished">À l&apos;instant</translation>
+    </message>
+    <message id="id-hr-min-ago">
+        <source>%1 min ago</source>
+        <translation type="unfinished">il y a %1 min</translation>
+    </message>
+    <message id="id-hr-logging-off">
+        <source>Heart rate logging is off</source>
+        <translation type="unfinished">Enregistrement du rythme cardiaque désactivé</translation>
+    </message>
+    <message id="id-nothing-yet-today">
+        <source>Nothing logged yet today</source>
+        <translation type="unfinished">Rien d&apos;enregistré aujourd&apos;hui</translation>
+    </message>
+    <message id="id-not-worn">
+        <source>Watch not worn</source>
+        <translation type="unfinished">Montre non portée</translation>
+    </message>
+    <message id="id-bpm">
+        <source>bpm</source>
+        <translation type="unfinished">bpm</translation>
+    </message>
+    <message id="id-no-data">
+        <source>No data</source>
+        <translation type="unfinished">Aucune donnée</translation>
+    </message>
+    <message id="id-range">
+        <source>Range</source>
+        <translation type="unfinished">Plage</translation>
+    </message>
+    <message id="id-resting">
+        <source>Resting</source>
+        <translation type="unfinished">Au repos</translation>
+    </message>
+    <message id="id-last-7-days">
+        <source>Last 7 days</source>
+        <translation type="unfinished">7 derniers jours</translation>
+    </message>
+    <message id="id-resting-average">
+        <source>Resting, average %1</source>
+        <translation type="unfinished">Au repos, moyenne %1</translation>
+    </message>
+    <message id="id-steps-logging-off">
+        <source>Step logging is off</source>
+        <translation type="unfinished">Enregistrement des pas désactivé</translation>
+    </message>
+    <message id="id-steps-goal-reached">
+        <source>Goal of %1 reached</source>
+        <translation type="unfinished">Objectif de %1 atteint</translation>
+    </message>
 </context>
 </TS>
