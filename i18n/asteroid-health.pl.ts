@@ -97,5 +97,13 @@
         <source>Add record</source>
         <translation>Dodaj wagę</translation>
     </message>
+    <message id="id-today">
+        <source>Today</source>
+        <translation type="unfinished">Dzisiaj</translation>
+    </message>
+    <message id="id-yesterday">
+        <source>Yesterday</source>
+        <translation type="unfinished">Wczoraj</translation>
+    </message>
 </context>
 </TS>

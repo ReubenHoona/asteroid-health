@@ -97,5 +97,13 @@
         <source>Add record</source>
         <translation>Ajoute record</translation>
     </message>
+    <message id="id-today">
+        <source>Today</source>
+        <translation type="unfinished">Aujourd&apos;hui</translation>
+    </message>
+    <message id="id-yesterday">
+        <source>Yesterday</source>
+        <translation type="unfinished">Hier</translation>
+    </message>
 </context>
 </TS>

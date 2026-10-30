@@ -101,5 +101,13 @@
         <source>Add record</source>
         <translation>Add record</translation>
     </message>
+    <message id="id-today">
+        <source>Today</source>
+        <translation>Today</translation>
+    </message>
+    <message id="id-yesterday">
+        <source>Yesterday</source>
+        <translation>Yesterday</translation>
+    </message>
 </context>
 </TS>

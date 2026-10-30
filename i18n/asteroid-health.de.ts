@@ -97,5 +97,13 @@
         <source>Add record</source>
         <translation>Datensatz hinzufügen</translation>
     </message>
+    <message id="id-today">
+        <source>Today</source>
+        <translation type="unfinished">Heute</translation>
+    </message>
+    <message id="id-yesterday">
+        <source>Yesterday</source>
+        <translation type="unfinished">Gestern</translation>
+    </message>
 </context>
 </TS>

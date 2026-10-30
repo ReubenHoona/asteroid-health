@@ -97,5 +97,13 @@
         <source>Add record</source>
         <translation>Добавить запись</translation>
     </message>
+    <message id="id-today">
+        <source>Today</source>
+        <translation type="unfinished">Сегодня</translation>
+    </message>
+    <message id="id-yesterday">
+        <source>Yesterday</source>
+        <translation type="unfinished">Вчера</translation>
+    </message>
 </context>
 </TS>
