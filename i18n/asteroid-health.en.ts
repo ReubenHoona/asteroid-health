@@ -44,10 +44,6 @@
             <source>Low heart rate</source>
             <translation>Low heart rate</translation>
         </message>
-        <message id="id-logging">
-            <source>Logging</source>
-            <translation>Logging</translation>
-        </message>
         <message id="id-ui-settings">
             <source>UI settings</source>
             <translation>UI settings</translation>

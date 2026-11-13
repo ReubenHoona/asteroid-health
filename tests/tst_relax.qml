@@ -187,6 +187,10 @@ Item {
             verify(b.every(function(x, k) { return x.ms === 40 && x.amp === 3 * k }))
             compare(Breath.waveformString(a).split(",").length, 50)
             compare(Breath.waveformString(a).substring(0, 22), "40:150,40:147,40:144,4")
+            // what the ngfd events relax_inhale and relax_exhale carry (draft ini files in NOTES.md)
+            compare(Breath.waveformString(a).slice(-14), "40:9,40:6,40:3")
+            compare(Breath.waveformString(b).substring(0, 18), "40:0,40:3,40:6,40:")
+            compare(Breath.waveformString(b).slice(-13), "40:144,40:147")
             // eleven moods in stock's order
             compare(Breath.MOODS.join(" "), "calm content excited frustrated happy neutral pleasant sad stressed unpleasant worried")
         }

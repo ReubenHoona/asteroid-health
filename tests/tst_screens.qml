@@ -773,8 +773,8 @@ Item {
             compare(byName(page, "lowRow").checked, true)
             compare(byName(page, "highRow").secondaryText, HealthData.metrics.defaultHighBpm() + " bpm")
             compare(byName(page, "lowRow").secondaryText, HealthData.metrics.defaultLowBpm() + " bpm")
-            // the logging switches are for developers only
-            compare(byName(page, "loggingRow").visible, false)
+            // stock has no logging row, with Developer options on or off
+            compare(byName(page, "loggingRow"), null)
             shot("settings-top")
             // a switch applies at once: no Save, the daemon's file has it
             tapItem(page, byName(page, "remindersRow"))
@@ -791,33 +791,11 @@ Item {
             compare(HealthData.settings.remindersEnabled, false)
             compare(HealthData.settings.hrAlertHighEnabled, true)
             compare(HealthData.settings.hrAlertLowEnabled, true)
-            // Developer options on: the logging row
+            // Developer options on: still no extra row (DECISIONS rule 2)
             devKey.value = true
             wait(400)
-            compare(byName(page, "loggingRow").visible, true)
-            shot("settings-dev")
-            var logging = byName(page, "loggingRow")
-            page.flickable.contentY = logging.mapToItem(page.flickable.contentItem, 0, 0).y - 200
-            wait(300)
-            mouseClick(logging, logging.width / 2, Math.min(logging.height / 2, 40))
-            var lp = currentPage("LoggerSettingsPage")
-            compare(lp.title, "Logging")
-            compare(findAll(lp, function(o) { return typeName(o) === "IconButton" }).length, 0)
-            var sw = byName(lp, "hrLogRow")
-            compare(sw.text, "Log heart rate")
-            tapItem(lp, sw)
-            compare(HealthData.settings.heartrateSensorEnabled, false)
-            verify(/\[heartrateSensor\][^\[]*enabled=false/.test(confText()), confText())
-            tapItem(lp, sw)
-            compare(HealthData.settings.heartrateSensorEnabled, true)
-            var sel = byName(lp, "stepIntervalRow")
-            sel.value = 20
-            wait(300)
-            compare(HealthData.settings.stepCounterInterval, 1200000)
-            sel.value = 10
-            wait(300)
-            compare(HealthData.settings.stepCounterInterval, 600000)
-            back()
+            compare(byName(page, "loggingRow"), null)
+            compare(texts(page).indexOf("Logging"), -1)
             devKey.value = false
             back()
         }

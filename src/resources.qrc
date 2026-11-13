@@ -22,7 +22,6 @@
         <file>morning/MorningBriefPage.qml</file>
         <file>settings/HealthSettingsPage.qml</file>
         <file>settings/StepGoalPage.qml</file>
-        <file>settings/LoggerSettingsPage.qml</file>
         <file>graphs/DayChart.qml</file>
         <file>graphs/WeekChart.qml</file>
     </qresource>

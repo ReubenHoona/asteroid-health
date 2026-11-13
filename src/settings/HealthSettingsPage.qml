@@ -5,7 +5,6 @@
 
 import QtQuick
 import org.asteroid.controls
-import Nemo.Configuration
 
 import "../data"
 import "../ui"
@@ -13,24 +12,17 @@ import "../ui"
 // The Health app's settings, one list that applies a change at once (no Save button, health-fitness-24):
 // 'Daily step goal' (the one goal the tile, the complications and the celebration share), 'Reminders to
 // move', 'High heart rate' and 'Low heart rate'. The daemon reads a change as soon as it is made
-// (LoggerSettings.healthSettingsChanged). Stock keeps these in the phone app and has no logging
-// switches: those are on a page that only Developer options shows.
+// (LoggerSettings.healthSettingsChanged). Stock has no logging
+// switches and no developer rows here: the logger keeps its own settings (LoggerSettings).
 HealthPage {
     id: page
     //% "Settings"
     title: qsTrId("id-settings")
 
-    // a page the list asks for: "goal" (the step goal) or "logging" (developer)
+    // a page the list asks for: "goal" (the step goal)
     signal pageRequested(string name)
 
     readonly property var settings: HealthData.settings
-    readonly property bool developer: developerOptions.value === true
-
-    ConfigurationValue {
-        id: developerOptions
-        key: "/org/asteroidos/settings/developer-options"
-        defaultValue: false
-    }
 
     // the heart rate thresholds in force: the setting, or (0, automatic) the default for the profile
     function highBpm() {
@@ -82,15 +74,5 @@ HealthPage {
         secondaryText: qsTrId("id-bpm-value").arg(page.lowBpm())
         checked: page.settings.hrAlertLowEnabled
         onToggled: (value) => page.settings.hrAlertLowEnabled = value
-    }
-    Button {
-        objectName: "loggingRow"
-        width: page.contentWidth
-        visible: page.developer
-        variant: "tonal"
-        iconName: "ios-settings-outline"
-        //% "Logging"
-        text: qsTrId("id-logging")
-        onClicked: page.pageRequested("logging")
     }
 }

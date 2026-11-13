@@ -64,11 +64,10 @@ Application {
     Component {
         id: settingsPage
         HealthSettingsPage {
-            onPageRequested: (name) => pageStack.push(name === "goal" ? stepGoalPage : loggingPage)
+            onPageRequested: (name) => pageStack.push(stepGoalPage)
         }
     }
     Component { id: stepGoalPage; StepGoalPage {} }
-    Component { id: loggingPage; LoggerSettingsPage {} }
 
     // the page of a card: "steps", "energy", "distance", "floors", "azm", "hourly", "heartrate",
     // "resting", "sleep"; and "settings", "morning"
