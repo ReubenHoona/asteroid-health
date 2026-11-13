@@ -1,27 +1,29 @@
 <RCC>
     <qresource prefix="/">
         <file>main.qml</file>
-        <file>stepCounter/StepCounterPreview.qml</file>
-        <file>stepCounter/StepsDetailPage.qml</file>
-        <file>stepCounter/StepsLineGraph.qml</file>
-        <file>heartrate/HeartratePreview.qml</file>
-        <file>heartrate/HeartrateDetailPage.qml</file>
-        <file>heartrate/HrGraph.qml</file>
-        <file>weight/WeightPreview.qml</file>
-        <file>weight/WeightDetailPage.qml</file>
-        <file>weight/WeightGraph.qml</file>
-        <file>settings/RootSettingsPage.qml</file>
-        <file>settings/LoggerSettingsPage.qml</file>
-        <file>settings/UiSettingsPage.qml</file>
-        <file>graphs/BarGraph.qml</file>
-        <file>graphs/LineGraph.qml</file>
-        <file>graphs/TimeLabels.qml</file>
-        <file>graphs/VerticalLabels.qml</file>
-        <file>graphs/DayChart.qml</file>
-        <file>graphs/DayNavigator.qml</file>
-        <file>graphs/WeekChart.qml</file>
-        <file>graphs/DaySwipeArea.qml</file>
-        <file>graphs/SectionFlickable.qml</file>
+        <file>theme/HealthPalette.qml</file>
+        <file>theme/qmldir</file>
+        <file>data/HealthData.qml</file>
+        <file>data/HealthText.qml</file>
         <file>data/HealthStats.js</file>
+        <file>data/HealthFormat.js</file>
+        <file>data/qmldir</file>
+        <file>ui/HealthPage.qml</file>
+        <file>ui/StatBlock.qml</file>
+        <file>ui/SectionLabel.qml</file>
+        <file>ui/MetricCard.qml</file>
+        <file>ui/GoalCard.qml</file>
+        <file>today/TodayPage.qml</file>
+        <file>stepCounter/StepsDetailPage.qml</file>
+        <file>heartrate/HeartrateDetailPage.qml</file>
+        <file>heartrate/RestingHeartRatePage.qml</file>
+        <file>metrics/MetricDetailPage.qml</file>
+        <file>sleep/SleepDetailPage.qml</file>
+        <file>morning/MorningBriefPage.qml</file>
+        <file>settings/HealthSettingsPage.qml</file>
+        <file>settings/StepGoalPage.qml</file>
+        <file>settings/LoggerSettingsPage.qml</file>
+        <file>graphs/DayChart.qml</file>
+        <file>graphs/WeekChart.qml</file>
     </qresource>
 </RCC>

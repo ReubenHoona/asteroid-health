@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2023 Arseniy Movshev <dodoradio@outlook.com>
- *               2026 Reuben Horner <reubarb.scons@gmail.com>
+ *               2023 Arseniy Movshev <dodoradio@outlook.com>
  *               2019 Florent Revest <revestflo@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,328 +20,135 @@
 import QtQuick
 import org.asteroid.controls
 
-import org.asteroid.sensorlogd
-
-import "../graphs"
+import "../data"
 import "../data/HealthStats.js" as Stats
+import "../data/HealthFormat.js" as Format
+import "../graphs"
+import "../theme"
+import "../ui"
 
-// The steps of a day, as the stock Fitbit steps view: the day's count and
-// how far it is to the goal, the steps of every hour, and the last seven
-// days with the goal line (a day without data keeps its place). The day
-// before or after: the arrows next to the date, or a swipe across the day.
-Item {
-    id: root
-    property date currentDay: new Date()
-    property date today: new Date()
-    property date weekEnd: currentDay
-    property var day: Stats.stepsDay([], currentDay)
-    property int dayTotal: 0
-    property var week: []
-    property var weekTicks: [0, 5000, 10000]
-    property int weekSelected: 6
-    property int weekAverage: -1
-    readonly property bool isToday: Stats.daysBetween(currentDay, today) === 0
-    // the user's goal, else the stock default (read when the page opens)
-    property int goal: Stats.DEFAULT_STEP_GOAL
-    property bool logging: true
-    property var cache: ({})
+// The steps of today and the week, as the stock steps view (StepsDetailsViewModel, abab.java): the
+// day's count and its goal, today's chart by hour, the last 7 days with the goal line, then 'Average
+// steps', 'Best day' (steps, date, distance) and 'Best hour' (the clock hour in the user's 12 or 24 hour
+// format, steps, distance; 'No best hour value' when the week has none). Today and the week, nothing
+// older: stock keeps 7 days on the watch and has no day arrows (health-fitness-25).
+HealthPage {
+    id: page
+    readonly property var tones: HealthPalette.fitness
+    readonly property date today: HealthData.today
+    // read again whenever the data changed
+    readonly property var days: { HealthData.version; return HealthData.week(HealthData.today) }
+    readonly property var todaySummary: days[6].summary
+    readonly property int total: { HealthData.version; return HealthData.stepsOf(HealthData.today) }
+    readonly property int goal: HealthData.stepGoal
+    readonly property var best: Format.best(days)
+    readonly property int average: Format.averageSteps(days)
+    readonly property bool hasToday: total > 0
 
-    StepsDataLoader {
-        id: stepsDataLoader
-        Component.onCompleted: triggerDaemonRecording()
-        onDataChanged: {
-            delete root.cache[Stats.dayKey(new Date())]
-            delete root.cache[Stats.dayKey(Stats.addDays(new Date(), -1))]
-            root.reload()
-        }
-        onTodayTotalChanged: if (root.isToday) root.dayTotal = root.totalOf(root.currentDay, root.day)
-    }
-
-    function summaryOf(d) {
-        var key = Stats.dayKey(d)
-        if (cache[key] === undefined)
-            cache[key] = Stats.stepsDay(stepsDataLoader.getDataForDate(Stats.addDays(d, 0)), d)
-        return cache[key]
-    }
-
-    // today: the live count when it is ahead of the log
-    function totalOf(d, s) {
-        return Stats.daysBetween(d, today) === 0 ? Math.max(s.total, stepsDataLoader.todayTotal) : s.total
-    }
-
-    function reload() {
-        day = summaryOf(currentDay)
-        dayTotal = totalOf(currentDay, day)
-        var first = Stats.addDays(weekEnd, -6)
-        var days = []
-        var hi = goal
-        var sum = 0
-        var counted = 0
-        for (var i = 0; i < 7; i++) {
-            var d = Stats.addDays(first, i)
-            var s = summaryOf(d)
-            var total = totalOf(d, s)
-            var hasData = s.count > 0 || total > 0
-            days.push({ label: d.toLocaleDateString(Qt.locale(), "ddd"), hasData: hasData, lo: 0, hi: total, mark: -1 })
-            hi = Math.max(hi, total)
-            if (hasData) {
-                sum += total
-                counted++
-            }
-        }
-        weekTicks = Stats.stepsAxis(hi).ticks
-        week = days
-        weekSelected = Stats.daysBetween(first, currentDay)
-        weekAverage = counted ? Math.round(sum / counted) : -1
-    }
-
-    function showDay(d) {
-        if (Stats.daysBetween(d, today) < 0)
-            return
-        currentDay = Stats.addDays(d, 0)
-        if (Stats.daysBetween(weekEnd, currentDay) > 0) {
-            var end = Stats.addDays(currentDay, 6)
-            weekEnd = Stats.daysBetween(end, today) < 0 ? Stats.addDays(today, 0) : end
-        } else if (Stats.daysBetween(currentDay, Stats.addDays(weekEnd, -6)) > 0) {
-            weekEnd = currentDay
-        }
-        reload()
-        dayFade.restart()
-    }
+    //% "Steps"
+    title: qsTrId("id-steps")
 
     function hourBars() {
         var bars = []
+        var hs = todaySummary.hourSteps || []
         for (var h = 0; h < 24; h++)
-            bars.push(day.hours[h] > 0 ? { lo: 0, hi: day.hours[h] } : null)
+            bars.push(hs[h] > 0 ? { lo: 0, hi: hs[h] } : null)
         return bars
     }
 
     function maxHour() {
-        return Math.max.apply(null, day.hours)
+        var hs = todaySummary.hourSteps || []
+        return Math.max.apply(null, hs.length ? hs : [1])
     }
 
-    function noDataText() {
-        if (!logging)
-            //% "Step logging is off"
-            return qsTrId("id-steps-logging-off")
-        if (isToday)
-            //% "Nothing logged yet today"
-            return qsTrId("id-nothing-yet-today")
-        //% "Watch not worn"
-        return qsTrId("id-not-worn")
-    }
-
-    Component.onCompleted: {
-        if (loggerSettings.stepGoalEnabled && loggerSettings.stepGoalTarget > 0)
-            goal = loggerSettings.stepGoalTarget
-        logging = loggerSettings.stepCounterEnabled
-        currentDay = Stats.addDays(currentDay, 0)
-        // the week of the overview's chart (the last 7 days) if it holds the day
-        weekEnd = Stats.daysBetween(currentDay, today) <= 6 ? Stats.addDays(today, 0) : currentDay
-        reload()
-    }
-
-    Timer {
-        interval: 60000
-        running: true
-        repeat: true
-        onTriggered: {
-            var wasToday = root.isToday
-            root.today = new Date()
-            if (wasToday && !root.isToday)
-                root.reload()
+    function weekModel() {
+        var out = []
+        for (var i = 0; i < 7; i++) {
+            var steps = i === 6 ? total : (days[i].summary.steps || 0)
+            out.push({ label: days[i].date.toLocaleDateString(Qt.locale(), "ddd"), hasData: steps > 0, lo: 0, hi: steps, mark: -1 })
         }
+        return out
     }
 
-    // three screens: the day at a glance, the day's hours, the week; the
-    // page rests on one of them
-    SectionFlickable {
-        id: flick
-        anchors.fill: parent
-        contentHeight: contentColumn.height
-        sections: contentColumn
-        Column {
-            id: contentColumn
-            width: parent.width
+    function weekTicks() {
+        var hi = goal
+        for (var i = 0; i < days.length; i++)
+            hi = Math.max(hi, i === 6 ? total : (days[i].summary.steps || 0))
+        return Stats.stepsAxis(hi).ticks
+    }
 
-            DaySwipeArea {
-                width: parent.width
-                height: root.height
-                onPrevious: root.showDay(Stats.addDays(root.currentDay, -1))
-                onNext: root.showDay(Stats.addDays(root.currentDay, 1))
+    StatBlock {
+        objectName: "stepsToday"
+        //% "Today"
+        caption: qsTrId("id-today")
+        value: page.hasToday ? HealthText.number(page.total) : HealthText.none
+        valueRole: "numeralSmall"
+        valueColor: page.tones.main
+        note: page.hasToday ? HealthText.goalText(page.total, page.goal) :
+            //% "No data yet"
+            qsTrId("id-no-data-yet")
+    }
 
-                Column {
-                    id: glance
-                    width: parent.width
-                    y: Math.max(Dims.h(8), (parent.height - height) / 2 - Dims.h(3))
-                    readonly property bool hasData: root.day.count > 0 || root.dayTotal > 0
+    SectionLabel {
+        //% "Today"
+        text: qsTrId("id-today")
+        visible: page.hasToday
+    }
+    DayChart {
+        objectName: "stepsDayChart"
+        visible: page.hasToday
+        width: parent.width
+        height: Theme.dp(80)
+        day: page.today
+        capped: false
+        bars: page.hasToday ? page.hourBars() : []
+        ticks: Stats.stepsAxis(page.hasToday ? page.maxHour() : 1).ticks
+        highlight: page.today.getHours()
+        barColor: page.tones.main
+    }
 
-                    Label {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        //% "Steps"
-                        text: qsTrId("id-steps")
-                        font {
-                            styleName: "SemiCondensed Light"
-                            pixelSize: Dims.l(7)
-                        }
-                    }
+    SectionLabel {
+        //% "Last 7 days"
+        text: qsTrId("id-last-7-days")
+    }
+    WeekChart {
+        objectName: "stepsWeekChart"
+        width: parent.width
+        height: Theme.dp(80)
+        days: page.weekModel()
+        ticks: page.weekTicks()
+        selected: 6
+        goal: page.goal
+        capped: false
+        barColor: page.tones.main
+    }
 
-                    DayNavigator {
-                        id: nav
-                        width: parent.width
-                        day: root.currentDay
-                        today: root.today
-                        onPrevious: root.showDay(Stats.addDays(root.currentDay, -1))
-                        onNext: root.showDay(Stats.addDays(root.currentDay, 1))
-                    }
-
-                    Column {
-                        width: parent.width
-                        NumberAnimation on opacity { id: dayFade; from: 0.3; to: 1; duration: 150; running: false }
-
-                        Item { width: parent.width; height: Dims.h(2) }
-
-                        Row {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            spacing: Dims.l(2)
-                            visible: glance.hasData
-                            Icon {
-                                name: "ios-walk"
-                                width: Dims.l(9)
-                                height: width
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                            Label {
-                                text: root.dayTotal.toLocaleString(Qt.locale(), "f", 0)
-                                font.pixelSize: Dims.l(15)
-                            }
-                        }
-                        Label {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            visible: glance.hasData
-                            text: root.dayTotal >= root.goal ?
-                                //% "Goal of %1 reached"
-                                //: %1 is the daily step goal
-                                qsTrId("id-steps-goal-reached").arg(root.goal.toLocaleString(Qt.locale(), "f", 0)) :
-                                //% "of %1 steps"
-                                //: %1 is the daily step goal
-                                qsTrId("id-steps-of-goal").arg(root.goal.toLocaleString(Qt.locale(), "f", 0))
-                            font.pixelSize: Dims.l(5.5)
-                            opacity: 0.8
-                        }
-                        Item { width: parent.width; height: Dims.h(5); visible: glance.hasData }
-                        // how far to the goal
-                        Rectangle {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            visible: glance.hasData
-                            width: Dims.w(56)
-                            height: Dims.l(2)
-                            radius: height / 2
-                            color: "#33FFFFFF"
-                            Rectangle {
-                                width: Math.max(parent.height, parent.width * Math.min(1, root.dayTotal / root.goal))
-                                height: parent.height
-                                radius: height / 2
-                                color: root.dayTotal >= root.goal ? "#10FF1C" : "#FFFFFF"
-                            }
-                        }
-
-                        // nothing logged that day
-                        Item { width: parent.width; height: Dims.h(4); visible: !glance.hasData }
-                        Label {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            visible: !glance.hasData
-                            //% "No data"
-                            text: qsTrId("id-no-data")
-                            font.pixelSize: Dims.l(9)
-                        }
-                        Label {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            width: Dims.w(70)
-                            horizontalAlignment: Text.AlignHCenter
-                            wrapMode: Text.WordWrap
-                            visible: !glance.hasData
-                            text: root.noDataText()
-                            font.pixelSize: Dims.l(5.5)
-                            opacity: 0.8
-                        }
-                    }
-                }
-            }
-
-            // the day: the steps of every hour, this hour brightest
-            DaySwipeArea {
-                width: parent.width
-                height: root.height
-                visible: root.day.count > 0
-                onPrevious: root.showDay(Stats.addDays(root.currentDay, -1))
-                onNext: root.showDay(Stats.addDays(root.currentDay, 1))
-
-                Column {
-                    width: parent.width
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: Dims.h(3)
-                    Label {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        text: nav.dayName(root.currentDay)
-                        font.pixelSize: Dims.l(6)
-                    }
-                    DayChart {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        width: Dims.w(80)
-                        height: Dims.h(42)
-                        day: root.currentDay
-                        capped: false
-                        bars: root.day.count > 0 ? root.hourBars() : []
-                        ticks: Stats.stepsAxis(root.day.count > 0 ? root.maxHour() : 1).ticks
-                        highlight: root.isToday ? root.today.getHours() : -1
-                    }
-                }
-            }
-
-            // the week: each day's steps and the goal line
-            Item {
-                width: parent.width
-                height: root.height
-
-                Column {
-                    width: parent.width
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: Dims.h(3)
-
-                    Label {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        text: Stats.daysBetween(root.weekEnd, root.today) === 0 ?
-                            //% "Last 7 days"
-                            qsTrId("id-last-7-days") :
-                            Stats.addDays(root.weekEnd, -6).toLocaleDateString(Qt.locale(), "d MMM") + " – " + root.weekEnd.toLocaleDateString(Qt.locale(), "d MMM")
-                        font.pixelSize: Dims.l(6)
-                    }
-
-                    WeekChart {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        width: Dims.w(80)
-                        height: Dims.h(40)
-                        days: root.week
-                        ticks: root.weekTicks
-                        selected: root.weekSelected
-                        goal: root.goal
-                        capped: false
-                        markColor: "#10FF1C"
-                        onDayClicked: (index) => root.showDay(Stats.addDays(root.weekEnd, index - 6))
-                    }
-
-                    Label {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        visible: root.weekAverage >= 0
-                        //% "Average %1 steps"
-                        //: %1 is a number of steps
-                        text: qsTrId("id-steps-average").arg(root.weekAverage.toLocaleString(Qt.locale(), "f", 0))
-                        font.pixelSize: Dims.l(4.5)
-                        opacity: 0.8
-                    }
-                }
-            }
-        }
+    StatBlock {
+        objectName: "stepsAverage"
+        //% "Average steps"
+        caption: qsTrId("id-average-steps")
+        value: page.average >= 0 ? HealthText.number(page.average) : HealthText.none
+        valueColor: page.tones.main
+    }
+    StatBlock {
+        objectName: "stepsBestDay"
+        //% "Best day"
+        caption: qsTrId("id-best-day")
+        value: page.best.day ? HealthText.number(page.best.day.steps) : HealthText.none
+        valueColor: page.tones.main
+        note: page.best.day ? page.best.day.date.toLocaleDateString(Qt.locale(), "dddd d MMM") : ""
+        noteBottom: page.best.day ? HealthText.distanceText(page.best.day.distanceM) : ""
+    }
+    StatBlock {
+        objectName: "stepsBestHour"
+        //% "Best hour"
+        caption: qsTrId("id-best-hour")
+        value: page.best.hour ? HealthText.number(page.best.hour.steps) : HealthText.none
+        valueColor: page.tones.main
+        note: page.best.hour ? TimeFormat.hour(new Date(page.best.hour.date.getFullYear(), page.best.hour.date.getMonth(),
+                                                        page.best.hour.date.getDate(), page.best.hour.hour)) :
+            //% "No best hour value"
+            qsTrId("id-no-best-hour")
+        noteBottom: page.best.hour ? HealthText.distanceText(page.best.hour.distanceM) : ""
     }
 }

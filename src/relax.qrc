@@ -1,0 +1,21 @@
+<RCC>
+    <qresource prefix="/">
+        <file alias="main.qml">relax_main.qml</file>
+        <file>relax/RelaxApp.qml</file>
+        <file>relax/RelaxStartPage.qml</file>
+        <file>relax/RelaxIntroPage.qml</file>
+        <file>relax/RelaxSettingsPage.qml</file>
+        <file>relax/RelaxSessionPage.qml</file>
+        <file>relax/RelaxRecapPage.qml</file>
+        <file>relax/RelaxMoodPage.qml</file>
+        <file>relax/BreathSession.qml</file>
+        <file>relax/RecapBurst.qml</file>
+        <file>relax/KeepAwake.qml</file>
+        <file>relax/Breath.js</file>
+        <file>ui/HealthPage.qml</file>
+        <file>ui/StatBlock.qml</file>
+        <file>ui/SectionLabel.qml</file>
+        <file>theme/HealthPalette.qml</file>
+        <file>theme/qmldir</file>
+    </qresource>
+</RCC>

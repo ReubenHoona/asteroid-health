@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2023 Arseniy Movshev <dodoradio@outlook.com>
- *               2026 Reuben Horner <reubarb.scons@gmail.com>
+ *               2023 Arseniy Movshev <dodoradio@outlook.com>
  *               2019 Florent Revest <revestflo@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,371 +18,282 @@
  */
 
 import QtQuick
+import QtSensors
 import org.asteroid.controls
 
-import org.asteroid.sensorlogd
-
-import "../graphs"
+import "../data"
 import "../data/HealthStats.js" as Stats
+import "../data/HealthFormat.js" as Format
+import "../graphs"
+import "../theme"
+import "../ui"
 
-// The heart rate of a day, as the stock Fitbit heart rate view: the latest
-// logged reading and when, the day's range and resting heart rate, the day
-// as a range bar every half hour, and the last seven days as a bar from each
-// day's low to its high with the resting rate as a dot. The day before or
-// after: the arrows next to the date, or a swipe across the day.
-Item {
-    id: root
-    property date currentDay: new Date()
-    property date today: new Date()
-    // the last day of the week chart: the week moves when the day leaves it
-    property date weekEnd: currentDay
-    property var day: Stats.heartRateDay([], currentDay, 48)
-    property var week: []
-    property var weekTicks: [40, 80, 120]
-    property int weekSelected: 6
-    property int restingAverage: -1
-    readonly property bool isToday: Stats.daysBetween(currentDay, today) === 0
-    // heart rate logging on (read when the page opens)
-    property bool logging: true
-    // the day summaries read so far (a day file is read when first shown)
-    property var cache: ({})
+// The heart rate page of stock (HeartRateDetailsViewModel.java:99-125, yrb.java:82-110): 'Heart Rate'
+// with the live bpm (the sensor runs only while this page is on the screen and the app is in front),
+// 'Heart rate range' of today as '58 - 112 bpm' (or '- -'), a line chart of today (the readings of the
+// day, one per minute), 'In heart rate zones' (the minutes of today in each zone, with the zones' bpm),
+// the zones of the last 7 days and 'For more Heart rate data, open the ... mobile app'. HEALTH colours.
+HealthPage {
+    id: page
+    readonly property var tones: HealthPalette.health
+    readonly property date today: HealthData.today
+    readonly property var day: { HealthData.version; return HealthData.heartDay(HealthData.today) }
+    readonly property var summary: { HealthData.version; return HealthData.summary(HealthData.today) }
+    readonly property var days: { HealthData.version; return HealthData.week(HealthData.today) }
+    readonly property var zones: { HealthData.version; return HealthData.metrics.zones() }
+    readonly property var zoneMin: Format.zoneMinutes(summary)
+    // the live reading of the sensor, 0 until it has one
+    property int liveBpm: 0
+    // run the sensor only while the page is shown and the app is the front one
+    readonly property bool live: visible && Qt.application.active
+    // the latest logged reading is recent (stock: within 2 hours)
+    readonly property bool fresh: day.count > 0 && Stats.minutesAgo(day.latestTime, today.getTime() / 1000) <= 120
+    readonly property bool hasValue: liveBpm > 0 || fresh
+    readonly property int shownBpm: liveBpm > 0 ? liveBpm : fresh ? day.latest : 0
+    readonly property var zoneColors: [tones.light, tones.main, tones.mid, tones.dark]
 
-    HrDataLoader {
-        id: hrDataLoader
-        // a day file changed: only today's (and yesterday's around midnight)
-        // are still written
-        onDataChanged: {
-            delete root.cache[Stats.dayKey(new Date())]
-            delete root.cache[Stats.dayKey(Stats.addDays(new Date(), -1))]
-            root.reload()
+    //% "Heart Rate"
+    title: qsTrId("id-heart-rate-title")
+
+    Loader {
+        active: page.live
+        sourceComponent: HrmSensor {
+            active: true
+            onReadingChanged: {
+                if (reading && reading.bpm > 0)
+                    page.liveBpm = reading.bpm
+            }
         }
     }
+    onLiveChanged: if (!live) liveBpm = 0
 
-    function summaryOf(d) {
-        var key = Stats.dayKey(d)
-        if (cache[key] === undefined)
-            cache[key] = Stats.heartRateDay(hrDataLoader.getDataForDate(Stats.addDays(d, 0)), d, 48)
-        return cache[key]
+    function points() {
+        var m = Format.minuteMeans(HealthData.heartPoints(today))
+        var s = Stats.dayStart(today)
+        var span = Stats.dayEnd(today) - s
+        var out = []
+        for (var i = 0; i < m.length; i++)
+            out.push({ x: (m[i].t - s) / span, y: m[i].v })
+        return out
     }
 
-    function reload() {
-        day = summaryOf(currentDay)
-        var first = Stats.addDays(weekEnd, -6)
-        var days = []
-        var lo = Infinity
-        var hi = -Infinity
-        var restSum = 0
-        var restCount = 0
+    function zoneName(i) {
+        switch (i) {
+        case 0:
+            //% "Light"
+            return qsTrId("id-zone-light")
+        case 1:
+            //% "Moderate"
+            return qsTrId("id-zone-moderate")
+        case 2:
+            //% "Vigorous"
+            return qsTrId("id-zone-vigorous")
+        }
+        //% "Peak"
+        return qsTrId("id-zone-peak")
+    }
+
+    function zoneValue(i) {
+        return [zoneMin.light, zoneMin.moderate, zoneMin.vigorous, zoneMin.peak][i]
+    }
+
+    function weekModel() {
+        var out = []
         for (var i = 0; i < 7; i++) {
-            var d = Stats.addDays(first, i)
-            var s = summaryOf(d)
-            days.push({ label: d.toLocaleDateString(Qt.locale(), "ddd"), hasData: s.count > 0,
-                        lo: s.min, hi: s.max, mark: s.resting })
-            if (s.count > 0) {
-                lo = Math.min(lo, s.min)
-                hi = Math.max(hi, s.max)
+            var z = Format.zoneMinutes(days[i].summary)
+            out.push({ label: days[i].date.toLocaleDateString(Qt.locale(), "ddd"), hasData: z.total > 0, lo: 0, hi: z.total, mark: -1 })
+        }
+        return out
+    }
+
+    function weekStacks() {
+        var out = []
+        for (var i = 0; i < 7; i++) {
+            var z = Format.zoneMinutes(days[i].summary)
+            out.push([{ value: z.light, color: zoneColors[0] }, { value: z.moderate, color: zoneColors[1] },
+                      { value: z.vigorous, color: zoneColors[2] }, { value: z.peak, color: zoneColors[3] }])
+        }
+        return out
+    }
+
+    function weekTicks() {
+        var hi = 10
+        for (var i = 0; i < 7; i++)
+            hi = Math.max(hi, Format.zoneMinutes(days[i].summary).total)
+        return Stats.axis(0, hi, 2, 10).ticks
+    }
+
+    function axisTicks() {
+        return day.count > 0 ? Stats.heartRateAxis(day.min, day.max).ticks : [40, 80, 120]
+    }
+
+    // the live value, as a big number with the heart in front
+    Item {
+        width: parent.width
+        height: bpmRow.height + Theme.dp(4)
+        Row {
+            id: bpmRow
+            anchors.horizontalCenter: parent.horizontalCenter
+            spacing: Theme.dp(4)
+            Icon {
+                name: "eos-health-heart"
+                color: page.tones.main
+                width: Theme.size.iconLarge
+                height: width
+                anchors.verticalCenter: parent.verticalCenter
             }
-            if (s.resting > 0) {
-                restSum += s.resting
-                restCount++
+            Label {
+                id: bpmValue
+                objectName: "bpmValue"
+                text: page.hasValue ? page.shownBpm : HealthText.none
+                role: "numeralSmall"
+                color: page.tones.main
+                font.features: Theme.tabularNumerals
+            }
+            Label {
+                anchors.baseline: bpmValue.baseline
+                //% "bpm"
+                text: qsTrId("id-bpm")
+                role: "bodyMedium"
+                color: HealthPalette.label
             }
         }
-        weekTicks = isFinite(lo) ? Stats.heartRateAxis(lo, hi).ticks : [40, 80, 120]
-        week = days
-        weekSelected = Stats.daysBetween(first, currentDay)
-        restingAverage = restCount ? Math.round(restSum / restCount) : -1
+    }
+    Label {
+        objectName: "bpmNote"
+        width: parent.width
+        horizontalAlignment: Text.AlignHCenter
+        wrapMode: Text.Wrap
+        role: "bodySmall"
+        color: Theme.color.onSurfaceVariant
+        text: page.liveBpm > 0 ? "" : page.fresh ? HealthText.ageText(page.day.latestTime, page.today.getTime()) :
+            page.day.count > 0 ?
+                //% "No recent heart rate"
+                qsTrId("id-no-recent-hr") :
+                //% "No heart rate data has been collected in the last 2 hrs."
+                qsTrId("id-no-hr-2h")
+        visible: text !== ""
     }
 
-    function showDay(d) {
-        if (Stats.daysBetween(d, today) < 0)
-            return
-        currentDay = Stats.addDays(d, 0)
-        if (Stats.daysBetween(weekEnd, currentDay) > 0) {
-            var end = Stats.addDays(currentDay, 6)
-            weekEnd = Stats.daysBetween(end, today) < 0 ? Stats.addDays(today, 0) : end
-        } else if (Stats.daysBetween(currentDay, Stats.addDays(weekEnd, -6)) > 0) {
-            weekEnd = currentDay
-        }
-        reload()
-        dayFade.restart()
+    StatBlock {
+        objectName: "hrRange"
+        //% "Heart rate range"
+        caption: qsTrId("id-hr-range")
+        value: Format.range(page.day.min, page.day.max, page.day.count).has ?
+            //% "%1 - %2"
+            //: %1 and %2 are the lowest and highest heart rate of today
+            qsTrId("id-hr-range-values").arg(page.day.min).arg(page.day.max) : HealthText.none
+        unit: page.day.count > 0 ? qsTrId("id-bpm") : ""
+        valueColor: page.tones.main
     }
 
-    function ageText() {
-        if (!isToday)
-            //% "Last at %1"
-            //: %1 is the time of the day's last reading
-            return qsTrId("id-hr-last-at").arg(new Date(day.latestTime * 1000).toLocaleTimeString(Qt.locale(), Locale.ShortFormat))
-        var m = Stats.minutesAgo(day.latestTime, today.getTime() / 1000)
-        if (m < 1)
-            //% "Just now"
-            return qsTrId("id-hr-just-now")
-        if (m < 60)
-            //% "%1 min ago"
-            //: %1 is a number of minutes
-            return qsTrId("id-hr-min-ago").arg(m)
-        return new Date(day.latestTime * 1000).toLocaleTimeString(Qt.locale(), Locale.ShortFormat)
+    SectionLabel {
+        //% "Today"
+        text: qsTrId("id-today")
+    }
+    DayChart {
+        objectName: "hrDayChart"
+        width: parent.width
+        height: Theme.dp(80)
+        day: page.today
+        capped: false
+        points: page.day.count > 0 ? page.points() : []
+        ticks: page.axisTicks()
+        lineColor: page.tones.main
+        Accessible.name:
+            //% "Line chart with heart rate data for today."
+            qsTrId("id-hr-chart-today")
     }
 
-    function noDataText() {
-        if (!logging)
-            //% "Heart rate logging is off"
-            return qsTrId("id-hr-logging-off")
-        if (isToday)
-            //% "Nothing logged yet today"
-            return qsTrId("id-nothing-yet-today")
-        //% "Watch not worn"
-        return qsTrId("id-not-worn")
+    SectionLabel {
+        //% "In heart rate zones"
+        text: qsTrId("id-in-zones")
     }
-
-    Component.onCompleted: {
-        logging = loggerSettings.heartrateSensorEnabled
-        currentDay = Stats.addDays(currentDay, 0)
-        // the week of the overview's chart (the last 7 days) if it holds the day
-        weekEnd = Stats.daysBetween(currentDay, today) <= 6 ? Stats.addDays(today, 0) : currentDay
-        reload()
-    }
-
-    Timer {
-        // "5 min ago" and today move on
-        interval: 60000
-        running: true
-        repeat: true
-        onTriggered: {
-            var wasToday = root.isToday
-            root.today = new Date()
-            if (wasToday && !root.isToday)
-                root.reload()
-        }
-    }
-
-
-    // three screens: the day at a glance, the day's chart, the week; the
-    // page rests on one of them
-    SectionFlickable {
-        id: flick
-        anchors.fill: parent
-        contentHeight: contentColumn.height
-        sections: contentColumn
-        Column {
-            id: contentColumn
-            width: parent.width
-
-            DaySwipeArea {
-                width: parent.width
-                height: root.height
-                onPrevious: root.showDay(Stats.addDays(root.currentDay, -1))
-                onNext: root.showDay(Stats.addDays(root.currentDay, 1))
-
-                Column {
-                    width: parent.width
-                    y: Math.max(Dims.h(8), (parent.height - height) / 2 - Dims.h(3))
-
-                    Label {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        //% "Heartrate"
-                        text: qsTrId("id-heartrate")
-                        font {
-                            styleName: "SemiCondensed Light"
-                            pixelSize: Dims.l(7)
-                        }
-                    }
-
-                    DayNavigator {
-                        id: nav
-                        width: parent.width
-                        day: root.currentDay
-                        today: root.today
-                        onPrevious: root.showDay(Stats.addDays(root.currentDay, -1))
-                        onNext: root.showDay(Stats.addDays(root.currentDay, 1))
-                    }
-
-                    Column {
-                        width: parent.width
-                        NumberAnimation on opacity { id: dayFade; from: 0.3; to: 1; duration: 150; running: false }
-
-                        Item { width: parent.width; height: Dims.h(2) }
-
-                        Row {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            spacing: Dims.l(2)
-                            visible: root.day.count > 0
-                            Icon {
-                                name: "ios-heart"
-                                color: "#FF5A6A"
-                                width: Dims.l(9)
-                                height: width
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                            Label {
-                                id: bpmValue
-                                text: root.day.latest
-                                font.pixelSize: Dims.l(15)
-                            }
-                            Label {
-                                anchors.baseline: bpmValue.baseline
-                                //% "bpm"
-                                text: qsTrId("id-bpm")
-                                font.pixelSize: Dims.l(6)
-                            }
-                        }
-                        Label {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            visible: root.day.count > 0
-                            text: root.day.count > 0 ? root.ageText() : ""
-                            font.pixelSize: Dims.l(5.5)
-                            opacity: 0.8
-                        }
-
-                        // nothing logged that day
-                        Item { width: parent.width; height: Dims.h(4); visible: root.day.count === 0 }
-                        Label {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            visible: root.day.count === 0
-                            //% "No data"
-                            text: qsTrId("id-no-data")
-                            font.pixelSize: Dims.l(9)
-                        }
-                        Label {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            width: Dims.w(70)
-                            horizontalAlignment: Text.AlignHCenter
-                            wrapMode: Text.WordWrap
-                            visible: root.day.count === 0
-                            text: root.noDataText()
-                            font.pixelSize: Dims.l(5.5)
-                            opacity: 0.8
-                        }
-
-                        Item { width: parent.width; height: Dims.h(5); visible: root.day.count > 0 }
-
-                        Row {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            visible: root.day.count > 0
-                            Column {
-                                width: Dims.w(32)
-                                Label {
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    text: root.day.min === root.day.max ? root.day.min : root.day.min + "–" + root.day.max
-                                    font.pixelSize: Dims.l(7)
-                                }
-                                Label {
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    //% "Range"
-                                    text: qsTrId("id-range")
-                                    font.pixelSize: Dims.l(4.5)
-                                    opacity: 0.7
-                                }
-                            }
-                            Column {
-                                width: Dims.w(32)
-                                Row {
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    spacing: Dims.l(1.5)
-                                    Rectangle {
-                                        width: Dims.l(2.5)
-                                        height: width
-                                        radius: width / 2
-                                        color: "#FF5A6A"
-                                        anchors.verticalCenter: parent.verticalCenter
-                                    }
-                                    Label {
-                                        text: root.day.resting > 0 ? root.day.resting : "–"
-                                        font.pixelSize: Dims.l(7)
-                                    }
-                                }
-                                Label {
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    //% "Resting"
-                                    text: qsTrId("id-resting")
-                                    font.pixelSize: Dims.l(4.5)
-                                    opacity: 0.7
-                                }
-                            }
-                        }
-                    }
+    Repeater {
+        model: 4
+        delegate: Item {
+            objectName: "zoneRow" + index
+            width: page.contentWidth
+            height: Math.max(zoneLabel.implicitHeight, Theme.dp(24)) + Theme.dp(4)
+            Rectangle {
+                id: swatch
+                width: Theme.dp(10)
+                height: width
+                radius: width / 2
+                color: page.zoneColors[index]
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.left: parent.left
+                anchors.leftMargin: Theme.dp(8)
+            }
+            Label {
+                id: zoneLabel
+                anchors {
+                    left: swatch.right
+                    leftMargin: Theme.dp(6)
+                    verticalCenter: parent.verticalCenter
                 }
+                text: page.zoneName(index)
+                role: "labelMedium"
+                color: Theme.color.onSurface
             }
-
-            // the day: a range bar every half hour, the latest brightest
-            DaySwipeArea {
-                width: parent.width
-                height: root.height
-                visible: root.day.count > 0
-                onPrevious: root.showDay(Stats.addDays(root.currentDay, -1))
-                onNext: root.showDay(Stats.addDays(root.currentDay, 1))
-
-                Column {
-                    width: parent.width
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: Dims.h(3)
-                    Label {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        text: nav.dayName(root.currentDay)
-                        font.pixelSize: Dims.l(6)
-                    }
-                    DayChart {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        width: Dims.w(80)
-                        height: Dims.h(42)
-                        day: root.currentDay
-                        bars: root.day.buckets
-                        ticks: root.day.count > 0 ? Stats.heartRateAxis(root.day.min, root.day.max).ticks : [40, 80, 120]
-                        highlight: root.day.latestBucket
-                    }
+            Label {
+                objectName: "zoneMinutes" + index
+                anchors {
+                    right: parent.right
+                    rightMargin: Theme.dp(8)
+                    verticalCenter: parent.verticalCenter
                 }
-            }
-
-            // the week: each day from its low to its high, the resting rate a dot
-            Item {
-                width: parent.width
-                height: root.height
-
-                Column {
-                    width: parent.width
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: Dims.h(3)
-
-                    Label {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        text: Stats.daysBetween(root.weekEnd, root.today) === 0 ?
-                            //% "Last 7 days"
-                            qsTrId("id-last-7-days") :
-                            Stats.addDays(root.weekEnd, -6).toLocaleDateString(Qt.locale(), "d MMM") + " – " + root.weekEnd.toLocaleDateString(Qt.locale(), "d MMM")
-                        font.pixelSize: Dims.l(6)
-                    }
-
-                    WeekChart {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        width: Dims.w(80)
-                        height: Dims.h(40)
-                        days: root.week
-                        ticks: root.weekTicks
-                        selected: root.weekSelected
-                        onDayClicked: (index) => root.showDay(Stats.addDays(root.weekEnd, index - 6))
-                    }
-
-                    Row {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        spacing: Dims.l(1.5)
-                        Rectangle {
-                            width: Dims.l(2.5)
-                            height: width
-                            radius: width / 2
-                            color: "#FF5A6A"
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                        Label {
-                            text: root.restingAverage > 0 ?
-                                //% "Resting, average %1"
-                                //: %1 is a heart rate in bpm
-                                qsTrId("id-resting-average").arg(root.restingAverage) :
-                                qsTrId("id-resting")
-                            font.pixelSize: Dims.l(4.5)
-                            opacity: 0.8
-                        }
-                    }
-                }
+                //% "%1 min"
+                //: %1 is a number of minutes
+                text: qsTrId("id-duration-min").arg(page.zoneValue(index))
+                role: "labelMedium"
+                color: page.zoneColors[index]
+                font.features: Theme.tabularNumerals
             }
         }
+    }
+    Label {
+        objectName: "zoneNote"
+        width: parent.width
+        horizontalAlignment: Text.AlignHCenter
+        wrapMode: Text.Wrap
+        role: "bodySmall"
+        color: Theme.color.onSurfaceVariant
+        text: HealthData.metrics.restingHr() > 0 ?
+            //% "Heart rate zones based on age and your %1 bpm RHR."
+            qsTrId("id-zones-rhr").arg(HealthData.metrics.restingHr()) :
+            //% "Heart rate zones based on age and your - - bpm RHR."
+            qsTrId("id-zones-rhr-none")
+    }
+
+    SectionLabel {
+        text: HealthText.weekText(page.today, page.today)
+    }
+    WeekChart {
+        objectName: "hrZoneWeek"
+        width: parent.width
+        height: Theme.dp(80)
+        days: page.weekModel()
+        stacks: page.weekStacks()
+        ticks: page.weekTicks()
+        selected: 6
+        Accessible.name:
+            //% "Bar chart with accumulated heart rate zone data for the week."
+            qsTrId("id-hr-zone-week-chart")
+    }
+
+    Label {
+        objectName: "hrFooter"
+        width: parent.width
+        topPadding: Theme.space.l
+        horizontalAlignment: Text.AlignHCenter
+        wrapMode: Text.Wrap
+        role: "bodySmall"
+        color: Theme.color.onSurfaceVariant
+        //% "For more %1 data, open the %2 mobile app"
+        //: %1 is the kind of data (Heart rate), %2 the name of the phone app
+        text: qsTrId("id-for-more-data").arg(
+            //% "Heart rate"
+            qsTrId("id-heart-rate")).arg(HealthText.phoneApp)
     }
 }

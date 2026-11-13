@@ -15,13 +15,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <QtQml>
 #include <asteroidapp.h>
-
-#include "cpp/lineGraph_p.h"
 
 int main(int argc, char *argv[])
 {
-    qmlRegisterType<LineGraph_p>("org.asteroid.health", 1, 0, "LineGraph_p");
     return AsteroidApp::main(argc, argv);
 }

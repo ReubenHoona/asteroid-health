@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Categories=Applications;
+Exec=asteroid-relax
+Icon=eos-relax
+X-Asteroid-Center-Color=#8D62C5
+X-Asteroid-Outer-Color=#290055

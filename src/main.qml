@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2023 Arseniy Movshev <dodoradio@outlook.com>
+ *               2026 Reuben Horner <reubarb.scons@gmail.com>
  *               2019 Florent Revest <revestflo@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,111 +21,88 @@ import QtQuick
 import org.asteroid.controls
 import Nemo.Configuration
 
-import org.asteroid.sensorlogd
-
-import "graphs"
-import "settings"
-import "stepCounter"
+import "data"
 import "heartrate"
-import "weight"
+import "metrics"
+import "morning"
+import "settings"
+import "sleep"
+import "stepCounter"
+import "today"
 
+// The Health app as stock's Today list (health-fitness-02): the main goal ring and one card per metric on
+// a black page (no FlatMesh, health-fitness-20); a card opens its detail page, the last row the settings.
 Application {
     id: app
 
-    centerColor: "#0097A6"
-    outerColor: "#00060C"
-
-    LoggerSettings{
-        id: loggerSettings
-    }
-
     LayerStack {
         id: pageStack
+        objectName: "pageStack"
         anchors.fill: parent
         firstPage: Component {
-            Item {
-                Flickable {
-                    z: 1
-                    anchors.fill: parent
-                    contentHeight: contentColumn.implicitHeight
-                    // the title scrolls away with the page, as a Wear OS list header
-                    PageHeader {
-                        id: title
-                        //% "Overview"
-                        text: qsTrId("id-overview")
-                        z: 5
-                    }
-                    Column {
-                        id: contentColumn
-                        anchors.fill: parent
-                        Item { width: parent.width; height: parent.width*0.2; visible: stepsPreviewVisible.value}
-
-                        StepCounterPreview {
-                            width: parent.width
-                            visible: stepsPreviewVisible.value
-                        }
-
-                        Item { width: parent.width; height: parent.width*0.1; visible: hrPreviewVisible.value}
-
-                        HeartratePreview {
-                            width: parent.width
-                            visible: hrPreviewVisible.value
-                        }
-
-                        Item { width: parent.width; height: parent.width*0.1; visible: weightPreviewVisible.value}
-
-                        WeightPreview {
-                            width: parent.width
-                            visible: weightPreviewVisible.value
-                        }
-
-                        ListItem {
-                            //% "Settings"
-                            title: qsTrId("id-settings")
-                            iconName: "ios-settings-outline"
-                            onClicked: pageStack.push(settingsPage)
-                        }
-
-                        Item { width: parent.width; height: parent.width*0.2}
-                    }
-                }
+            TodayPage {
+                onOpened: (key) => app.openStat(key)
             }
         }
     }
-    ConfigurationValue {
-        id: stepsPreviewVisible
-        key: "/org/asteroidos/health/ui/stepCounter/showpreview"
-        defaultValue: true
-    }
-    ConfigurationValue {
-        id: hrPreviewVisible
-        key: "/org/asteroidos/health/ui/heartrate/showpreview"
-        defaultValue: true
-    }
-    ConfigurationValue {
-        id: weightPreviewVisible
-        key: "/org/asteroidos/health/ui/weight/showpreview"
-        defaultValue: false
+
+    Component { id: stepsPage; StepsDetailPage {} }
+    Component { id: heartratePage; HeartrateDetailPage {} }
+    Component { id: restingPage; RestingHeartRatePage {} }
+    Component { id: sleepPage; SleepDetailPage {} }
+    Component { id: energyPage; MetricDetailPage { metric: "energy" } }
+    Component { id: distancePage; MetricDetailPage { metric: "distance" } }
+    Component { id: floorsPage; MetricDetailPage { metric: "floors" } }
+    Component { id: azmPage; MetricDetailPage { metric: "azm" } }
+    Component { id: hourlyPage; MetricDetailPage { metric: "hourly" } }
+    Component {
+        id: morningPage
+        MorningBriefPage {
+            onStatRequested: (key) => app.openStat(key)
+        }
     }
     Component {
         id: settingsPage
-        RootSettingsPage {
+        HealthSettingsPage {
+            onPageRequested: (name) => pageStack.push(name === "goal" ? stepGoalPage : loggingPage)
         }
     }
+    Component { id: stepGoalPage; StepGoalPage {} }
+    Component { id: loggingPage; LoggerSettingsPage {} }
 
-    // The launcher's heart rate tile opens the heart rate page on today, as
-    // the stock tile opens the heart rate app: before it launches (or
-    // raises) this app it sets this key to "heartrate@<time in ms>"
+    // the page of a card: "steps", "energy", "distance", "floors", "azm", "hourly", "heartrate",
+    // "resting", "sleep"; and "settings", "morning"
+    function pageFor(key) {
+        switch (key) {
+        case "steps": return stepsPage
+        case "energy": return energyPage
+        case "distance": return distancePage
+        case "floors": return floorsPage
+        case "azm": return azmPage
+        case "hourly": return hourlyPage
+        case "heartrate": return heartratePage
+        case "resting": return restingPage
+        case "sleep": return sleepPage
+        case "settings": return settingsPage
+        case "morning": return morningPage
+        }
+        return null
+    }
+
+    function openStat(key) {
+        var page = pageFor(key)
+        if (page)
+            pageStack.push(page)
+    }
+
+    // The launcher's tiles and the notifications open a page of this app: before they launch (or raise) it
+    // they set this key to "<page>@<time in ms>" (the heart rate tile: "heartrate", the Morning Brief
+    // notification: "morning"; any card's key works)
     ConfigurationValue {
         id: openRequest
         key: "/org/asteroidos/health/ui/open"
         defaultValue: ""
         onValueChanged: Qt.callLater(app.openRequested)
-    }
-    Component {
-        id: heartratePage
-        HeartrateDetailPage {
-        }
     }
     function openRequested() {
         var request = String(openRequest.value || "")
@@ -136,11 +114,12 @@ Application {
         // an old request (the app started later some other way): ignored
         if (at < 0 || !(age > -5000 && age < 60000))
             return
-        if (request.substring(0, at) === "heartrate") {
-            while (pageStack.layers.length > 0)
-                pageStack.pop(pageStack.currentLayer)
-            pageStack.push(heartratePage)
-        }
+        var key = request.substring(0, at)
+        if (pageFor(key) === null)
+            return
+        while (pageStack.layers.length > 0)
+            pageStack.pop(pageStack.currentLayer)
+        pageStack.push(pageFor(key))
     }
     Component.onCompleted: Qt.callLater(openRequested)
 }

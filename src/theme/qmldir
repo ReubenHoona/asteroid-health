@@ -1,0 +1,2 @@
+module HealthTheme
+singleton HealthPalette 1.0 HealthPalette.qml

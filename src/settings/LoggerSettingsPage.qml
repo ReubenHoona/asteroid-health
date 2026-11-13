@@ -1,112 +1,88 @@
 /*
  * Copyright (C) 2023 Arseniy Movshev <dodoradio@outlook.com>
- *               2019 Florent Revest <revestflo@gmail.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *               2026 Reuben Horner <reubarb.scons@gmail.com>
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 import QtQuick
 import org.asteroid.controls
 
-import org.asteroid.sensorlogd
+import "../data"
+import "../ui"
 
-Item {
-    Flickable {
-        anchors.fill: parent
-        contentHeight: contentColumn.implicitHeight
-        // the title scrolls away with the page, as a Wear OS list header
-        PageHeader {
-            //% "Logger Settings"
-            text: qsTrId("id-logger-settings-title")
-            z: 5
+// Logging, for developers (stock has no such switches, so only Developer options reaches this page): the
+// step and heart rate loggers on or off and their intervals (5 to 60 minutes). Changes apply at once; the
+// daemon takes them up once, a second after the last change (reInitLogger).
+HealthPage {
+    id: page
+    //% "Logging"
+    title: qsTrId("id-logging")
+
+    readonly property var settings: HealthData.settings
+    // what the settings say when the page opens (LoggerSettings has no change signal for these)
+    property bool stepLog: true
+    property bool hrLog: true
+    property int stepMinutes: 10
+    property int hrMinutes: 10
+    property bool ready: false
+    Component.onCompleted: {
+        stepLog = settings.stepCounterEnabled
+        hrLog = settings.heartrateSensorEnabled
+        stepMinutes = Math.round(settings.stepCounterInterval / 60000)
+        hrMinutes = Math.round(settings.heartrateSensorInterval / 60000)
+        ready = true
+    }
+
+    Timer {
+        id: apply
+        interval: 1000
+        onTriggered: page.settings.reInitLogger()
+    }
+
+    SwitchButton {
+        objectName: "stepLogRow"
+        width: page.contentWidth
+        //% "Log step count"
+        text: qsTrId("id-log-step-count")
+        checked: page.stepLog
+        onToggled: (value) => { page.stepLog = value; page.settings.stepCounterEnabled = value; apply.restart() }
+    }
+    IntSelector {
+        objectName: "stepIntervalRow"
+        width: page.contentWidth
+        height: Theme.dp(60)
+        value: page.stepMinutes
+        min: 5
+        max: 60
+        stepSize: 1
+        unitMarker: " min"
+        onValueChanged: if (page.ready && value !== page.stepMinutes) {
+            page.stepMinutes = value
+            page.settings.stepCounterInterval = value * 60000
+            apply.restart()
         }
-        Column {
-            id: contentColumn
-            anchors.fill: parent
-
-            Item { width: parent.width; height: parent.width*0.2}
-
-            LabeledSwitch {
-                id: stepsEnableSwitch
-                width: parent.width
-                height: width*0.25
-                //% "Log step count"
-                text: qsTrId("id-log-step-count")
-                Component.onCompleted: checked = loggerSettings.stepCounterEnabled
-            }
-            IntSelector {
-                id: stepsIntervalSelector
-                width: parent.width
-                height: width*0.25
-                value: loggerSettings.stepCounterInterval/60000
-                min: 5
-                max: 60
-                stepSize: 1
-                unitMarker: "m"
-            }
-            LabeledSwitch {
-                id: stepsGoalEnableSwitch
-                width: parent.width
-                height: width*0.25
-                //% "Enable steps goal"
-                text: qsTrId("id-enable-steps-goal")
-                Component.onCompleted: checked = loggerSettings.stepGoalEnabled
-            }
-            IntSelector {
-                id: stepsGoalSelector
-                width: parent.width
-                height: width*0.25
-                value: loggerSettings.stepGoalTarget
-                min: 500
-                max: 50000
-                stepSize: 500
-                unitMarker: " steps"
-            }
-            LabeledSwitch {
-                id: hrEnableSwitch
-                width: parent.width
-                height: width*0.25
-                //% "Log heart rate"
-                text: qsTrId("id-log-heart-rate")
-                Component.onCompleted: checked = loggerSettings.heartrateSensorEnabled
-            }
-            IntSelector {
-                id: hrIntervalSelector
-                width: parent.width
-                height: width*0.25
-                value: loggerSettings.heartrateSensorInterval/60000
-                min: 5
-                max: 60
-                stepSize: 1
-                unitMarker: "m"
-            }
-            IconButton {
-                iconName: "ios-checkmark-circle-outline"
-                height: parent.width*0.2
-                width: height
-                anchors.horizontalCenter: parent.horizontalCenter
-                onClicked: {
-                    loggerSettings.stepCounterEnabled = stepsEnableSwitch.checked
-                    loggerSettings.stepCounterInterval = stepsIntervalSelector.value*60000
-                    loggerSettings.stepGoalEnabled = stepsGoalEnableSwitch.checked
-                    loggerSettings.stepGoalTarget = stepsGoalSelector.value
-                    loggerSettings.heartrateSensorEnabled = hrEnableSwitch.checked
-                    loggerSettings.heartrateSensorInterval = hrIntervalSelector.value*60000
-                    loggerSettings.reInitLogger()
-                    pageStack.pop(pageStack.currentLayer)
-                }
-            }
+    }
+    SwitchButton {
+        objectName: "hrLogRow"
+        width: page.contentWidth
+        //% "Log heart rate"
+        text: qsTrId("id-log-heart-rate")
+        checked: page.hrLog
+        onToggled: (value) => { page.hrLog = value; page.settings.heartrateSensorEnabled = value; apply.restart() }
+    }
+    IntSelector {
+        objectName: "hrIntervalRow"
+        width: page.contentWidth
+        height: Theme.dp(60)
+        value: page.hrMinutes
+        min: 5
+        max: 60
+        stepSize: 1
+        unitMarker: " min"
+        onValueChanged: if (page.ready && value !== page.hrMinutes) {
+            page.hrMinutes = value
+            page.settings.heartrateSensorInterval = value * 60000
+            apply.restart()
         }
     }
 }

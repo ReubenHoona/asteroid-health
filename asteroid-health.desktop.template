@@ -2,6 +2,6 @@
 Type=Application
 Categories=Applications;
 Exec=asteroid-health
-Icon=ios-pulse-outline
-X-Asteroid-Center-Color=#0097A6
-X-Asteroid-Outer-Color=#00060C
+Icon=eos-health
+X-Asteroid-Center-Color=#00867D
+X-Asteroid-Outer-Color=#00201E

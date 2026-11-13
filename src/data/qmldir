@@ -1,0 +1,3 @@
+module HealthData
+singleton HealthData 1.0 HealthData.qml
+singleton HealthText 1.0 HealthText.qml
