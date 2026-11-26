@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (C) 2026 Reuben Horner <reubarb.scons@gmail.com>
+# Copyright (C) 2026 eos
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # make-fixtures.py HOME: fictional sensorlogd day files under

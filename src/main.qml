@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2023 Arseniy Movshev <dodoradio@outlook.com>
- *               2026 Reuben Horner <reubarb.scons@gmail.com>
+ *               2026 eos
  *               2019 Florent Revest <revestflo@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify

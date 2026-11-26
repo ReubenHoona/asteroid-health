@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2026 Reuben Horner <reubarb.scons@gmail.com>
+ * Copyright (C) 2026 eos
  *               2019 Florent Revest <revestflo@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
