@@ -66,6 +66,22 @@ QtObject {
         return qsTrId("id-steps")
     }
 
+    // the Morning Brief's outro (R5 E-10): one of stock's five lines (0x7f140b00-04), Format.outroLine of the day
+    function outroText(date) {
+        switch (Format.outroLine(date)) {
+        //% "Your progress starts today. Let’s go!"
+        case 0: return qsTrId("id-morning-outro-0")
+        //% "Let’s make well-being a top priority. Check out your stats."
+        case 1: return qsTrId("id-morning-outro-1")
+        //% "How are you feeling? Start with some stats."
+        case 2: return qsTrId("id-morning-outro-2")
+        //% "Your day awaits. Let’s make it count!"
+        case 3: return qsTrId("id-morning-outro-3")
+        }
+        //% "It’s a new day—Let’s make well-being your top task."
+        return qsTrId("id-morning-outro-4")
+    }
+
     // Cardio load (R5 E-09): the target ('Target %1$d–%2$d' 0x7f140138) or, while there is none, the days still
     // needed for one ('See target load in %d days', plurals 0x7f120006); the day against it ('In target' 0x7f140141,
     // 'Above target' 0x7f140137, 'Below target': the words of 0x7f14090d)

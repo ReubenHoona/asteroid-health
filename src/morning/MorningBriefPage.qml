@@ -14,9 +14,13 @@ import "../theme"
 import "../ui"
 
 // Morning Brief (health-fitness-26, stock MorningBriefActivity): what the notification 'Start your day'
-// opens when Bedtime mode ends in the morning. The greeting ('Good morning! Here's how your day is
-// shaping up.'), today's weather from the Weather app's data (the condition, the high and the low), last
-// night's sleep and yesterday's steps with their distance. A card is left out when it has nothing to say.
+// opens when Bedtime mode ends in the morning, or when sensorlogd has the night of a morning without Bedtime (R5
+// E-10, its wake-up), and the Today list's Morning Brief card. Stock's pages in its order (MorningBriefPagesOrder:
+// landing, sleep, exercise, weather, outro; readiness, the health metrics and activity plans are not on this
+// watch): the landing (the sun, 'Good morning! Here's how your day is shaping up.'), last night's sleep, the
+// exercise (yesterday's steps with their distance, this week's exercise days), today's weather from the Weather
+// app's data (the condition, the high and the low) and the outro (one of stock's five lines a day). A card is left
+// out when it has nothing to say.
 HealthPage {
     id: page
     readonly property date today: HealthData.today
@@ -37,15 +41,65 @@ HealthPage {
     ConfigurationValue { id: weatherCity; key: "/org/asteroidos/weather/city-name"; defaultValue: "" }
     ConfigurationValue { id: useFahrenheit; key: "/org/asteroidos/settings/use-fahrenheit"; defaultValue: false }
 
+    // the landing page
+    Icon {
+        objectName: "briefLanding"
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: Theme.size.iconSmall * 1.5
+        height: width
+        name: "ios-sunny"
+        color: HealthPalette.wellness.main
+    }
     Label {
         objectName: "greeting"
-        width: parent.width
+        // inside the round screen under the landing's sun
+        width: parent.width * 0.84
+        anchors.horizontalCenter: parent.horizontalCenter
         horizontalAlignment: Text.AlignHCenter
         wrapMode: Text.Wrap
         role: "bodyLarge"
         color: Theme.color.onSurface
         //% "Good morning! Here’s how your day is shaping up."
         text: qsTrId("id-morning-greeting")
+    }
+
+    // last night
+    MetricCard {
+        objectName: "briefSleep"
+        width: page.contentWidth
+        title: qsTrId("id-sleep")
+        iconName: "eos-health-sleep"
+        category: "wellness"
+        textValue: true
+        value: page.night.valid ? HealthText.durationText(page.night.main.asleepMin) : HealthText.none
+        subtitle: page.night.valid ? (page.night.scoreLabel || "") : qsTrId("id-wear-to-sleep")
+        onClicked: page.openStat("sleep")
+    }
+
+    // the exercise page: yesterday's steps and this week's exercise days
+    MetricCard {
+        objectName: "briefSteps"
+        width: page.contentWidth
+        //% "Yesterday"
+        title: qsTrId("id-yesterday")
+        iconName: "eos-health-steps"
+        category: "fitness"
+        value: HealthText.number(page.yesterdaySteps)
+        //% "steps"
+        unit: qsTrId("id-unit-steps")
+        subtitle: page.yesterdaySteps > 0 ? HealthText.distanceText(page.yesterdaySummary.distanceM) : ""
+        onClicked: page.openStat("steps")
+    }
+    MetricCard {
+        objectName: "briefExercise"
+        readonly property var week: { HealthData.version; return Format.exerciseWeek(HealthData.weekWorkouts(page.today), Format.weekStartMs(page.today.getTime())) }
+        width: page.contentWidth
+        title: qsTrId("id-exercise-days")
+        iconName: "eos-exercise"
+        category: "fitness"
+        value: String(week.done)
+        subtitle: qsTrId("id-exercise-days-week").arg(week.done).arg(Format.EXERCISE_DAYS_GOAL)
+        onClicked: page.openStat("exercise")
     }
 
     // the weather
@@ -62,32 +116,15 @@ HealthPage {
         value: Format.temperature(weatherMax.value, page.fahrenheit) + "° / " + Format.temperature(weatherMin.value, page.fahrenheit) + "°"
     }
 
-    // last night
-    MetricCard {
-        objectName: "briefSleep"
-        width: page.contentWidth
-        title: qsTrId("id-sleep")
-        iconName: "eos-health-sleep"
-        category: "wellness"
-        textValue: true
-        value: page.night.valid ? HealthText.durationText(page.night.main.asleepMin) : HealthText.none
-        subtitle: page.night.valid ? (page.night.scoreLabel || "") : qsTrId("id-wear-to-sleep")
-        onClicked: page.openStat("sleep")
-    }
-
-    // yesterday
-    MetricCard {
-        objectName: "briefSteps"
-        width: page.contentWidth
-        //% "Yesterday"
-        title: qsTrId("id-yesterday")
-        iconName: "eos-health-steps"
-        category: "fitness"
-        value: HealthText.number(page.yesterdaySteps)
-        //% "steps"
-        unit: qsTrId("id-unit-steps")
-        subtitle: page.yesterdaySteps > 0 ? HealthText.distanceText(page.yesterdaySummary.distanceM) : ""
-        onClicked: page.openStat("steps")
+    // the outro
+    Label {
+        objectName: "briefOutro"
+        width: parent.width
+        horizontalAlignment: Text.AlignHCenter
+        wrapMode: Text.Wrap
+        role: "bodyLarge"
+        color: Theme.color.onSurface
+        text: HealthText.outroText(page.today)
     }
 
     // the Health app opens the stat the brief's card names

@@ -701,6 +701,30 @@
             <source>Most inactive today</source>
             <translation>Most inactive today</translation>
         </message>
+        <message id="id-start-your-day">
+            <source>Start your day</source>
+            <translation>Start your day</translation>
+        </message>
+        <message id="id-morning-outro-0">
+            <source>Your progress starts today. Let’s go!</source>
+            <translation>Your progress starts today. Let’s go!</translation>
+        </message>
+        <message id="id-morning-outro-1">
+            <source>Let’s make well-being a top priority. Check out your stats.</source>
+            <translation>Let’s make well-being a top priority. Check out your stats.</translation>
+        </message>
+        <message id="id-morning-outro-2">
+            <source>How are you feeling? Start with some stats.</source>
+            <translation>How are you feeling? Start with some stats.</translation>
+        </message>
+        <message id="id-morning-outro-3">
+            <source>Your day awaits. Let’s make it count!</source>
+            <translation>Your day awaits. Let’s make it count!</translation>
+        </message>
+        <message id="id-morning-outro-4">
+            <source>It’s a new day—Let’s make well-being your top task.</source>
+            <translation>It’s a new day—Let’s make well-being your top task.</translation>
+        </message>
         <message id="id-cardio-load">
             <source>Cardio load</source>
             <translation>Cardio load</translation>

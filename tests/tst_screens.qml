@@ -462,7 +462,8 @@ Item {
             for (var i = 0; i < page.rows.length; i++) {
                 page.list.positionViewAtIndex(i, ListView.Beginning)
                 page.list.contentY -= 40
-                wait(150)
+                // the rows' edge scaling settles (150 ms was too short on a loaded build server)
+                wait(400)
                 verify(checkTexts(page, "today-row" + i, true) > 0)
                 if (i === 2 || i === 6 || i === 9 || i === 10)
                     shot("today-row" + i)
@@ -1004,6 +1005,13 @@ Item {
             compare(byName(page, "briefSteps").value, HealthText.number(y))
             compare(byName(page, "briefSteps").title, "Yesterday")
             compare(byName(page, "briefSteps").subtitle, HealthText.distanceText(HealthData.summary(dayOf(1)).distanceM))
+            // R5 E-10: stock's pages in its order: the landing, sleep, exercise, weather, the outro
+            var order = ["briefLanding", "greeting", "briefSleep", "briefSteps", "briefExercise", "briefWeather", "briefOutro"]
+            for (var o = 1; o < order.length; o++)
+                verify(byName(page, order[o - 1]).mapToItem(page, 0, 0).y < byName(page, order[o]).mapToItem(page, 0, 0).y,
+                       order[o - 1] + " above " + order[o])
+            compare(byName(page, "briefExercise").title, "Exercise days")
+            compare(byName(page, "briefOutro").text, HealthText.outroText(HealthData.today))
             fahrenheit.value = true
             wait(400)
             compare(weather.value, "72° / 54°")
@@ -1012,8 +1020,13 @@ Item {
             wait(300)
             shot("morning-cards")
             checkTexts(page, "morning-cards", true)
+            page.flickable.contentY = page.flickable.contentHeight - page.height
+            wait(300)
+            shot("morning-outro")
             // a card of the brief opens that card's page
             var sleepCard = byName(page, "briefSleep")
+            page.flickable.contentY = Math.max(0, sleepCard.mapToItem(page.flickable.contentItem, 0, 0).y - 120)
+            wait(300)
             mouseClick(sleepCard, sleepCard.width / 2, 30)
             currentPage("SleepDetailPage")
             back()

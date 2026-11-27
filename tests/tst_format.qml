@@ -33,6 +33,22 @@ TestCase {
         compare(HealthText.goalText(10120, 10000), "120 over goal")
     }
 
+    // R5 E-10: the Morning Brief's order, its Today card's morning, the outro's line of the day
+    function test_morningBrief() {
+        compare(F.MORNING_PAGES.join(" "), "landing sleep exercise weather outro")
+        verify(!F.morningCardShown(new Date(2026, 10, 25, 3, 59)))
+        verify(F.morningCardShown(new Date(2026, 10, 25, 4, 0)))
+        verify(F.morningCardShown(new Date(2026, 10, 25, 11, 59)))
+        verify(!F.morningCardShown(new Date(2026, 10, 25, 12, 0)))
+        compare(F.outroLine(new Date(2026, 0, 1, 8, 0)), 0)
+        compare(F.outroLine(new Date(2026, 0, 2, 23, 0)), 1)
+        compare(F.outroLine(new Date(2026, 0, 6, 7, 0)), 0)
+        // a day keeps its line whatever the hour
+        compare(F.outroLine(new Date(2026, 10, 25, 0, 1)), F.outroLine(new Date(2026, 10, 25, 23, 59)))
+        compare(HealthText.outroText(new Date(2026, 0, 1)), "Your progress starts today. Let’s go!")
+        compare(HealthText.outroText(new Date(2026, 0, 5)), "It’s a new day—Let’s make well-being your top task.")
+    }
+
     // R5 E-09: the cardio load's target and state words
     function test_cardioTexts() {
         compare(HealthText.cardioTargetText({ hasTarget: true, low: 32, high: 52, daysLeft: 0 }), "Target 32–52")

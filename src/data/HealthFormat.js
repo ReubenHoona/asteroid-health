@@ -78,6 +78,26 @@ function goalState(steps, goal) {
     return { state: "over", amount: steps - goal }
 }
 
+/* Morning Brief (R5 E-10). Stock's brief is pages in MorningBriefPagesOrder (MorningBriefPagesOrder.java: LANDING 0,
+ * SLEEP 1, READINESS 2, HEALTH METRICS 3-4, EXERCISE 5, ACTIVITY PLANS 6, WEATHER 7, OUTRO 8); the ones this watch has
+ * data for, in that order. The Today list's Morning Brief card (MorningBriefCardViewModel: "Morning Brief"
+ * 0x7f140aff) shows in the morning: from 04:00 to 12:00, the launcher's morning (modescore.h MorningFromHour /
+ * MorningToHour; guess: stock's card follows its brief). The outro's line is one of stock's five (0x7f140b00-04),
+ * one a day. */
+var MORNING_PAGES = ["landing", "sleep", "exercise", "weather", "outro"]
+var MORNING_FROM_HOUR = 4
+var MORNING_TO_HOUR = 12
+function morningCardShown(date) {
+    var h = date.getHours()
+    return h >= MORNING_FROM_HOUR && h < MORNING_TO_HOUR
+}
+// which of the outro's five lines a day has (0..4): by the day of the year, so a day keeps its line
+function outroLine(date) {
+    var start = new Date(date.getFullYear(), 0, 1)
+    var day = Math.round((new Date(date.getFullYear(), date.getMonth(), date.getDate()) - start) / 86400000)
+    return day % 5
+}
+
 /* The ring of the main goal: 0..1, a goal passed fills it */
 function goalFraction(steps, goal) {
     return Math.max(0, Math.min(1, steps / Math.max(1, goal)))

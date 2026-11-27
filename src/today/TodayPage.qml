@@ -96,6 +96,14 @@ Item {
                    value: HealthText.goalValueText(main.type, goalValue), icon: Format.goalIcon(main.type),
                    subtitle: HealthText.goalText(goalValue, main.target, main.type),
                    fraction: Format.goalFraction(goalValue, main.target) })
+        // stock's Morning Brief card (MorningBriefCardViewModel, R5 E-10): in the morning, under the ring; it opens
+        // the brief
+        if (Format.morningCardShown(t)) {
+            //% "Morning Brief"
+            var tBrief = qsTrId("id-morning-brief")
+            //% "Start your day"
+            out.push(card("morning", tBrief, "ios-sunny", "wellness", qsTrId("id-start-your-day"), "", "", true))
+        }
         out.push(card("steps", tSteps, "eos-health-steps", "fitness", HealthText.number(steps), "", ""))
         out.push(card("energy", tEnergy, "eos-health-energy", "fitness",
                       HealthText.number(Format.energyValue(s.energyKcal)), uCal, ""))
