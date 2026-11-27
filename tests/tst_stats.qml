@@ -20,8 +20,8 @@ TestCase {
     function at(y, m, d, h, min) { return new Date(y, m - 1, d, h, min || 0).getTime() / 1000 }
     function pt(t, v) { return Qt.point(t, v) }
 
-    function test_restingSparse() {
-        // one reading every 10 minutes: 3 in each 30 minutes
+    function test_sparseDay() {
+        // one reading every 10 minutes
         var data = []
         var values = [70, 64, 58, 56, 57, 60, 72, 90, 88, 75]
         for (var i = 0; i < values.length; i++)
@@ -30,13 +30,14 @@ TestCase {
         compare(r.count, 10)
         compare(r.min, 56)
         compare(r.max, 90)
-        // lowest 30 minute stretch: 58, 56, 57
-        compare(r.resting, 57)
         compare(r.latest, 75)
         compare(r.latestTime, at(2026, 10, 20, 4, 30))
+        // one resting heart rate for everything: sensorlogd's daily estimate, none made here
+        compare(r.resting, undefined)
+        compare(S.restingRate, undefined)
     }
 
-    function test_restingDenseExercise() {
+    function test_denseExercise() {
         // a calm hour every 10 minutes, then a minute by minute workout
         var data = []
         for (var i = 0; i < 6; i++)
@@ -44,27 +45,15 @@ TestCase {
         for (var j = 0; j < 40; j++)
             data.push(pt(at(2026, 10, 20, 18, 0) + j * 60, 120 + j))
         var r = S.heartRateDay(data, day(2026, 10, 20), 48)
-        compare(r.resting, 62)   // (62 + 63 + 62) / 3 = 62.3
+        compare(r.min, 62)
         compare(r.max, 159)
     }
 
-    function test_restingWindowEdge() {
-        // 30 minutes is [t, t + 1800): every 15 minutes never has 3 (as the
-        // launcher's tile, HealthLog::restingRate)
-        var t = at(2026, 10, 20, 9, 0)
-        var every15 = [pt(t, 50), pt(t + 900, 50), pt(t + 1800, 90), pt(t + 2700, 90)]
-        compare(S.heartRateDay(every15, day(2026, 10, 20), 48).resting, -1)
-        var every1459 = [pt(t, 50), pt(t + 899, 50), pt(t + 1798, 90), pt(t + 2697, 90)]
-        compare(S.heartRateDay(every1459, day(2026, 10, 20), 48).resting, 63)
-    }
-
-    function test_restingTooFew() {
-        // two readings in any 30 minutes: no resting rate
+    function test_fewReadings() {
         var data = [pt(at(2026, 10, 20, 9, 0), 60), pt(at(2026, 10, 20, 9, 20), 61),
                     pt(at(2026, 10, 20, 11, 0), 80), pt(at(2026, 10, 20, 13, 0), 82)]
         var r = S.heartRateDay(data, day(2026, 10, 20), 48)
         compare(r.count, 4)
-        compare(r.resting, -1)
         compare(r.min, 60)
         compare(r.max, 82)
     }
@@ -75,7 +64,6 @@ TestCase {
         compare(r.min, 100)
         compare(r.max, 100)
         compare(r.latest, 100)
-        compare(r.resting, -1)
         compare(r.latestBucket, 28)
         compare(r.buckets[28].lo, 100)
         compare(r.buckets[28].hi, 100)
@@ -88,7 +76,6 @@ TestCase {
             var r = S.heartRateDay(lists[i], day(2026, 10, 20), 48)
             compare(r.count, 0)
             compare(r.latest, 0)
-            compare(r.resting, -1)
             compare(r.latestBucket, -1)
             compare(r.buckets.length, 48)
             compare(r.buckets.filter(function(b) { return b !== null }).length, 0)

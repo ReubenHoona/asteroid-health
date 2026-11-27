@@ -43,6 +43,7 @@ Item {
         var steps = HealthData.stepsOf(t)
         var goal = HealthData.stepGoal
         var hr = HealthData.heartDay(t)
+        var resting = HealthData.restingOf(t)
         var night = HealthData.sleep()
         var out = []
 
@@ -97,7 +98,7 @@ Item {
                       fresh ? String(hr.latest) : HealthText.none, uBpm,
                       fresh ? HealthText.ageText(hr.latestTime, Date.now()) : sNoHr))
         out.push(card("resting", tResting, "eos-health-resting", "health",
-                      hr.resting > 0 ? String(hr.resting) : HealthText.none, uBpm, ""))
+                      resting > 0 ? String(resting) : HealthText.none, uBpm, ""))
         out.push(card("sleep", tSleep, "eos-health-sleep", "wellness",
                       night.valid ? HealthText.durationText(night.main.asleepMin) : HealthText.none, "",
                       night.valid ? (night.scoreLabel || "") : sNoSleep, night.valid))

@@ -17,6 +17,8 @@
 #   today-6    a full day
 # a second argument: "empty" writes no data, "stale" ends today's readings three hours ago
 # plus heartrate.db (every valid reading of the day files, for the zones and Active Zone Minutes),
+# health.db's daily rows with the resting heart rate sensorlogd estimates once a day (today 52,
+# today-1 54, today-3 55, today-5 53, today-6 51),
 # last night's sleep (sleep/<today>.json: 450 minutes in bed, 420 asleep: 90 REM, 240 light, 90 deep) and
 # 2026-01-15 (tst_data.qml: the malformed lines the loaders skip) and
 # the step goal (8000) in HOME/.config/asteroid/sensorlogd.conf.
@@ -151,6 +153,24 @@ for day in (D[0], D[1], D[5], D[6]):
                 db.execute("INSERT OR IGNORE INTO heartrate VALUES (?, ?, 3)", (int(a[0]) * 1000, int(a[1])))
 db.commit()
 db.close()
+
+# health.db: sensorlogd's daily rows (its store/healthDb.h; the columns the readers take), with the
+# resting heart rate it estimated once for each day
+hdb_path = os.path.join(root, "health.db")
+for suffix in ("", "-wal", "-shm"):
+    if os.path.exists(hdb_path + suffix):
+        os.unlink(hdb_path + suffix)
+hdb = sqlite3.connect(hdb_path)
+hdb.execute("CREATE TABLE meta (key TEXT PRIMARY KEY, value)")
+hdb.execute("CREATE TABLE daily (date TEXT PRIMARY KEY, resting_hr INTEGER, hrv_rmssd REAL, resp_rate REAL, "
+            "temp_dev_c REAL, steps INTEGER, kcal REAL, distance_m REAL, floors INTEGER, azm INTEGER, "
+            "hours_met INTEGER, cardio_load REAL, readiness INTEGER, closed_ms INTEGER, seq INTEGER NOT NULL DEFAULT 0)")
+for n, (k, bpm) in enumerate(((0, 52), (1, 54), (3, 55), (5, 53), (6, 51))):
+    hdb.execute("INSERT INTO daily (date, resting_hr, seq) VALUES (?, ?, ?)", (D[k].isoformat(), bpm, n + 1))
+hdb.execute("INSERT INTO meta VALUES ('seq', 5)")
+hdb.execute("PRAGMA user_version=1")
+hdb.commit()
+hdb.close()
 
 # last night: yesterday 23:10 to today 06:40
 sl_dir = os.path.join(root, "sleep")

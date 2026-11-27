@@ -5,7 +5,7 @@ The Health app of the watch, a frontend for the data collected by sensorlogd, bu
 A black page with the main goal ring and a card for each metric in stock's order: Steps, Energy burned, Distance, Floors, Active Zone Minutes, Hourly activity, Heart rate, Resting heart rate and Sleep, in the category colours of stock (FITNESS teal, HEALTH blue, WELLNESS lilac). A card opens the page of its metric:
 * steps: today by the hour, the last 7 days with the goal line, the average, the best day and the best hour
 * heart rate: the live rate (the sensor runs only while the page is shown), today's range, a line chart of today, the minutes in each heart rate zone and the zones of the week
-* resting heart rate: today, the 7-day average and a 7-day line chart
+* resting heart rate: today, the 7-day average and a 7-day line chart; a day's value is sensorlogd's, estimated once a day as stock's is (`HealthMetricsLoader.restingHrOf`, health.db `daily.resting_hr`)
 * energy, distance, floors, Active Zone Minutes and hourly activity: today and the week
 * sleep: last night's time asleep, the score, bedtime and wake-up time, the stages and naps
 

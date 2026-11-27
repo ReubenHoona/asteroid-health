@@ -13,8 +13,9 @@ import "HealthStats.js" as Stats
 /*
  * The data of every Health page, read once and shared: the day summaries of sensorlogd's
  * HealthMetricsLoader (steps, distance, energy, floors, zones, Active Zone Minutes, hourly
- * activity), last night's sleep, the heart rate readings of a day and the settings
- * (LoggerSettings: the one steps goal and the Health features).
+ * activity), last night's sleep, the heart rate readings of a day, the resting heart rate of a
+ * day (sensorlogd's daily estimate) and the settings (LoggerSettings: the one steps goal and the
+ * Health features).
  *
  * Nothing here runs on a timer. The loaders watch the day files and emit dataChanged() when
  * the daemon writes (a batch of the sensor hub, so a few times an hour at most); pages read
@@ -36,7 +37,7 @@ QtObject {
 
     // what was read, by day (plain objects: filling the cache while a page's binding is evaluated must
     // not count as a change)
-    readonly property var _store: ({ days: {}, hr: {}, sleep: null })
+    readonly property var _store: ({ days: {}, hr: {}, resting: {}, sleep: null })
 
     property LoggerSettings _logger: LoggerSettings { id: logger }
     property HealthMetricsLoader _metrics: HealthMetricsLoader {
@@ -86,6 +87,7 @@ QtObject {
                 hrKeep[h] = _store.hr[h]
         _store.days = keep
         _store.hr = hrKeep
+        _store.resting = {}
         _store.sleep = null
         today = t
         version++
@@ -113,6 +115,16 @@ QtObject {
             _store.hr[key] = { date: Stats.addDays(date, 0), value: Stats.heartRateDay(raw, date, 48), points: raw }
         }
         return _store.hr[key].value
+    }
+
+    // The resting heart rate of a day, -1 if it has none: the one sensorlogd estimated once for the
+    // day (stock: "estimated once a day"; sensorlogd metrics/restingHr.h: the median of the still,
+    // worn minutes of 24 hours, in the morning with the night or at the day's close), cached
+    function restingOf(date) {
+        var key = Stats.dayKey(date)
+        if (_store.resting[key] === undefined)
+            _store.resting[key] = metricsLoader.restingHrOf(Stats.addDays(date, 0))
+        return _store.resting[key]
     }
 
     // the readings of a day as [{t, v}] (seconds, bpm)

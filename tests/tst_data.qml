@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * The image's sensorlogd loaders on the fixtures of make-fixtures.py (HOME),
- * through HealthStats.js: malformed lines, a missing day, a single reading.
+ * through HealthStats.js: malformed lines, a missing day, a single reading;
+ * the resting heart rate of a day from sensorlogd's daily rows (health.db).
  */
 
 import QtQuick
@@ -18,6 +19,7 @@ TestCase {
 
     HrDataLoader { id: hr }
     StepsDataLoader { id: steps }
+    HealthMetricsLoader { id: metrics }
 
     function test_malformedFile() {
         var j = new Date(2026, 0, 15, 12)
@@ -30,7 +32,6 @@ TestCase {
         compare(r.max, 66)
         compare(r.latest, 66)
         compare(r.latestTime, S.dayStart(j) + 12 * 3600 + 3000)
-        compare(r.resting, -1)
     }
 
     function test_stepsFile() {
@@ -60,7 +61,6 @@ TestCase {
         compare(r.latest, 77)
         compare(r.min, 77)
         compare(r.max, 77)
-        compare(r.resting, -1)
         compare(new Date(r.latestTime * 1000).getHours(), 9)
     }
 
@@ -69,9 +69,24 @@ TestCase {
         var d = S.addDays(new Date(), -3)
         var r = S.heartRateDay(hr.getDataForDate(d), d, 48)
         compare(r.count, 48)
-        verify(r.resting > 0)
-        verify(r.min <= r.resting && r.resting <= r.max)
         compare(r.buckets.filter(function(b) { return b !== null }).length, 16)
+    }
+
+    function test_restingIsTheDailyEstimate() {
+        // the fixtures' daily rows: today 52, yesterday 54, three days ago 55, five 53, six 51
+        var t = new Date()
+        compare(metrics.restingHrOf(t), 52)
+        compare(metrics.restingHrOf(S.addDays(t, -1)), 54)
+        compare(metrics.restingHrOf(S.addDays(t, -2)), -1) // not worn
+        compare(metrics.restingHrOf(S.addDays(t, -4)), -1) // a single reading
+        compare(metrics.restingHrOf(S.addDays(t, -6)), 51)
+        // what zones and energy use: the mean of the last 7 days', (52 + 54 + 55 + 53 + 51) / 5
+        compare(metrics.restingHr(), 53)
+    }
+
+    function test_theAlertDefaultsAreStocks() {
+        compare(metrics.defaultHighBpm(), 120)
+        compare(metrics.defaultLowBpm(), 50)
     }
 
     function test_today() {

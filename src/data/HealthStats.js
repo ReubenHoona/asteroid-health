@@ -34,12 +34,6 @@
 var HR_MIN_VALID = 25
 var HR_MAX_VALID = 250
 
-/* Resting heart rate: the lowest average heart rate held for this long,
- * over at least this many readings (sensorlogd logs about one reading
- * every 10 minutes at rest, so 30 minutes holds 3) */
-var RESTING_WINDOW = 1800
-var RESTING_MIN_READINGS = 3
-
 /* Stock Fitbit/Wear OS daily step goal, used when none is set */
 var DEFAULT_STEP_GOAL = 10000
 
@@ -117,38 +111,16 @@ function heartRates(data, start, end) {
     })
 }
 
-/* The resting heart rate of time ordered readings, -1 if no stretch of
- * RESTING_WINDOW holds RESTING_MIN_READINGS of them */
-function restingRate(points) {
-    var best = Infinity
-    var j = 0
-    var sum = 0
-    for (var i = 0; i < points.length; i++) {
-        if (j < i) {
-            j = i
-            sum = 0
-        }
-        while (j < points.length && points[j].t < points[i].t + RESTING_WINDOW) {
-            sum += points[j].v
-            j++
-        }
-        var count = j - i
-        if (count >= RESTING_MIN_READINGS)
-            best = Math.min(best, sum / count)
-        sum -= points[i].v
-    }
-    return isFinite(best) ? Math.round(best) : -1
-}
-
-/* The heart rate of one day: count, min, max, resting (-1: not enough
- * readings), latestTime, latest (0 if no reading), buckets: the low and
- * high of each of the n equal parts of the day ({lo, hi}, null if none),
- * and latestBucket: the part of the latest reading (-1 if none) */
+/* The heart rate of one day: count, min, max, latestTime, latest (0 if no
+ * reading), buckets: the low and high of each of the n equal parts of the
+ * day ({lo, hi}, null if none), and latestBucket: the part of the latest
+ * reading (-1 if none). The resting heart rate is not made here: it is
+ * sensorlogd's daily estimate (HealthData.restingOf). */
 function heartRateDay(data, date, n) {
     var start = dayStart(date)
     var end = dayEnd(date)
     var pts = heartRates(data, start, end)
-    var r = { count: pts.length, min: 0, max: 0, resting: -1, latestTime: 0, latest: 0, buckets: [], latestBucket: -1 }
+    var r = { count: pts.length, min: 0, max: 0, latestTime: 0, latest: 0, buckets: [], latestBucket: -1 }
     n = n || 48
     for (var b = 0; b < n; b++)
         r.buckets.push(null)
@@ -173,7 +145,6 @@ function heartRateDay(data, date, n) {
     r.latest = Math.round(last.v)
     r.min = Math.round(r.min)
     r.max = Math.round(r.max)
-    r.resting = restingRate(pts)
     return r
 }
 

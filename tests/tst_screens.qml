@@ -644,7 +644,7 @@ Item {
             noTimers(page, "resting")
             var sum = 0, n = 0
             for (var i = 6; i >= 0; i--) {
-                var r = HealthData.heartDay(dayOf(i)).resting
+                var r = HealthData.restingOf(dayOf(i))
                 if (r > 0) {
                     sum += r
                     n++
@@ -771,8 +771,9 @@ Item {
             compare(byName(page, "highRow").checked, true)
             compare(byName(page, "lowRow").text, "Low heart rate")
             compare(byName(page, "lowRow").checked, true)
-            compare(byName(page, "highRow").secondaryText, HealthData.metrics.defaultHighBpm() + " bpm")
-            compare(byName(page, "lowRow").secondaryText, HealthData.metrics.defaultLowBpm() + " bpm")
+            // none set: stock's defaults
+            compare(byName(page, "highRow").secondaryText, "120 bpm")
+            compare(byName(page, "lowRow").secondaryText, "50 bpm")
             // stock has no logging row, with Developer options on or off
             compare(byName(page, "loggingRow"), null)
             shot("settings-top")

@@ -15,17 +15,17 @@ import "../ui"
 
 // The resting heart rate card's page of stock (yra.java:137,179-235, aadg.java:69-103): today's resting
 // heart rate, 'Average resting HR' over 'Last 7 days' and the line of the last 7 days' resting rates.
-// A day's resting rate is the lowest rate held for 30 minutes (HealthStats.restingRate). HEALTH colours.
+// A day's resting rate is sensorlogd's, estimated once a day (HealthData.restingOf). HEALTH colours.
 HealthPage {
     id: page
     readonly property var tones: HealthPalette.health
     readonly property date today: HealthData.today
-    // the heart rate summaries of the last 7 days, the oldest first
+    // the resting heart rate of the last 7 days, the oldest first ({ resting }, -1: none)
     readonly property var daySummaries: {
         HealthData.version
         var out = []
         for (var i = 6; i >= 0; i--)
-            out.push(HealthData.heartDay(Stats.addDays(HealthData.today, -i)))
+            out.push({ resting: HealthData.restingOf(Stats.addDays(HealthData.today, -i)) })
         return out
     }
     readonly property int todayResting: daySummaries[6].resting
