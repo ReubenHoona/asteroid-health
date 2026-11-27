@@ -21,13 +21,6 @@ import QtQuick
 import org.asteroid.controls
 import Nemo.Configuration
 
-import "data"
-import "heartrate"
-import "metrics"
-import "morning"
-import "settings"
-import "sleep"
-import "stepCounter"
 import "today"
 
 // The Health app as stock's Today list (health-fitness-02): the main goal ring and one card per metric on
@@ -35,63 +28,68 @@ import "today"
 Application {
     id: app
 
+    // The Today list is made once the app has its size (makeToday()): main.qml is made at 0 x 0 and gets
+    // the window's size after it, so a list made with the app was laid out at 0 x 0 and again at full size.
     LayerStack {
         id: pageStack
         objectName: "pageStack"
         anchors.fill: parent
-        firstPage: Component {
-            TodayPage {
-                onOpened: (key) => app.openStat(key)
-            }
+    }
+    Component {
+        id: todayComponent
+        TodayPage {
+            onOpened: (key) => app.openStat(key)
         }
     }
+    property bool todayMade: false
+    function makeToday() {
+        if (todayMade || width <= 0)
+            return
+        todayMade = true
+        pageStack.firstPage = todayComponent
+    }
+    onWidthChanged: makeToday()
 
-    Component { id: stepsPage; StepsDetailPage {} }
-    Component { id: heartratePage; HeartrateDetailPage {} }
-    Component { id: restingPage; RestingHeartRatePage {} }
-    Component { id: sleepPage; SleepDetailPage {} }
-    Component { id: energyPage; MetricDetailPage { metric: "energy" } }
-    Component { id: distancePage; MetricDetailPage { metric: "distance" } }
-    Component { id: floorsPage; MetricDetailPage { metric: "floors" } }
-    Component { id: azmPage; MetricDetailPage { metric: "azm" } }
-    Component { id: hourlyPage; MetricDetailPage { metric: "hourly" } }
-    Component {
-        id: morningPage
-        MorningBriefPage {
-            onStatRequested: (key) => app.openStat(key)
-        }
+    // The page of a card by key, and the "settings" and "morning" pages: made from their files when one is
+    // first opened (pageFor()). As Components of this file their types (the charts, the heart rate page's
+    // QtSensors) were loaded with the app, before the first frame.
+    readonly property var pageFiles: ({
+        "steps": "stepCounter/StepsDetailPage.qml",
+        "energy": "metrics/MetricDetailPage.qml",
+        "distance": "metrics/MetricDetailPage.qml",
+        "floors": "metrics/MetricDetailPage.qml",
+        "azm": "metrics/MetricDetailPage.qml",
+        "hourly": "metrics/MetricDetailPage.qml",
+        "heartrate": "heartrate/HeartrateDetailPage.qml",
+        "resting": "heartrate/RestingHeartRatePage.qml",
+        "sleep": "sleep/SleepDetailPage.qml",
+        "settings": "settings/HealthSettingsPage.qml",
+        "morning": "morning/MorningBriefPage.qml"
+    })
+    readonly property string stepGoalFile: "settings/StepGoalPage.qml"
+    property var _components: ({})
+    function _component(file) {
+        if (_components[file] === undefined)
+            _components[file] = Qt.createComponent(Qt.resolvedUrl(file))
+        return _components[file]
     }
-    Component {
-        id: settingsPage
-        HealthSettingsPage {
-            onPageRequested: (name) => pageStack.push(stepGoalPage)
-        }
-    }
-    Component { id: stepGoalPage; StepGoalPage {} }
 
     // the page of a card: "steps", "energy", "distance", "floors", "azm", "hourly", "heartrate",
     // "resting", "sleep"; and "settings", "morning"
     function pageFor(key) {
-        switch (key) {
-        case "steps": return stepsPage
-        case "energy": return energyPage
-        case "distance": return distancePage
-        case "floors": return floorsPage
-        case "azm": return azmPage
-        case "hourly": return hourlyPage
-        case "heartrate": return heartratePage
-        case "resting": return restingPage
-        case "sleep": return sleepPage
-        case "settings": return settingsPage
-        case "morning": return morningPage
-        }
-        return null
+        return pageFiles.hasOwnProperty(key) ? _component(pageFiles[key]) : null
     }
 
+    // a metric page shows its metric; the Morning Brief opens a card's page, the settings their step goal
     function openStat(key) {
         var page = pageFor(key)
-        if (page)
-            pageStack.push(page)
+        if (!page)
+            return
+        var layer = pageStack.push(page, pageFiles[key] === "metrics/MetricDetailPage.qml" ? { "metric": key } : {})
+        if (layer && key === "morning")
+            layer.statRequested.connect(app.openStat)
+        else if (layer && key === "settings")
+            layer.pageRequested.connect(function (name) { pageStack.push(app._component(app.stepGoalFile)) })
     }
 
     // The launcher's tiles and the notifications open a page of this app: before they launch (or raise) it
@@ -118,7 +116,10 @@ Application {
             return
         while (pageStack.layers.length > 0)
             pageStack.pop(pageStack.currentLayer)
-        pageStack.push(pageFor(key))
+        openStat(key)
     }
-    Component.onCompleted: Qt.callLater(openRequested)
+    Component.onCompleted: {
+        makeToday()
+        Qt.callLater(openRequested)
+    }
 }
