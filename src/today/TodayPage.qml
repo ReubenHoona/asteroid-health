@@ -14,7 +14,8 @@ import "../ui"
 
 /*
  * The Health app's first screen as stock's Today list (TodayRoute, health-fitness-02): a scrolling
- * list (a ScalingList: the TransformingLazyColumn's edge scaling) with the main goal ring, then one
+ * list (a ScalingList: the TransformingLazyColumn's edge scaling) with the main goal ring (its type the phone's: steps,
+ * energy, distance, floors or Active Zone Minutes, R5 E-18; a tap opens that metric's page), then one
  * card per metric in stock's order: Steps, Energy burned, Distance, Floors, Active Zone Minutes,
  * Exercise days (stock's stat 6, EXERCISE: uxo.java; M4 WO-10), Hourly activity, Heart rate, Resting
  * heart rate, Sleep, Skin temp variation (stock's stat 14, SKIN_TEMP, HEALTH: uxx.java; M4 WO-13). No title (the
@@ -42,7 +43,8 @@ Item {
         var t = HealthData.today
         var s = HealthData.summary(t)
         var steps = HealthData.stepsOf(t)
-        var goal = HealthData.stepGoal
+        var main = HealthData.mainGoal()
+        var goalValue = Format.goalValue(main.type, s, steps)
         var hr = HealthData.heartDay(t)
         var resting = HealthData.restingOf(t)
         var night = HealthData.sleep()
@@ -88,8 +90,10 @@ Item {
         //% "Last sleep session"
         var sLastSleep = qsTrId("id-last-sleep-session")
 
-        out.push({ type: "goal", key: "steps", caption: tSteps, value: HealthText.number(steps),
-                   subtitle: HealthText.goalText(steps, goal), fraction: Format.goalFraction(steps, goal) })
+        out.push({ type: "goal", key: Format.goalCardKey(main.type), caption: HealthText.goalCaption(main.type),
+                   value: HealthText.goalValueText(main.type, goalValue), icon: Format.goalIcon(main.type),
+                   subtitle: HealthText.goalText(goalValue, main.target, main.type),
+                   fraction: Format.goalFraction(goalValue, main.target) })
         out.push(card("steps", tSteps, "eos-health-steps", "fitness", HealthText.number(steps), "", ""))
         out.push(card("energy", tEnergy, "eos-health-energy", "fitness",
                       HealthText.number(Format.energyValue(s.energyKcal)), uCal, ""))
@@ -161,6 +165,7 @@ Item {
                     caption: row.modelData.caption
                     subtitle: row.modelData.subtitle
                     fraction: row.modelData.fraction
+                    iconName: row.modelData.icon
                     onClicked: page.opened(row.modelData.key)
                 }
             }

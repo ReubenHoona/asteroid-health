@@ -83,6 +83,32 @@ function goalFraction(steps, goal) {
     return Math.max(0, Math.min(1, steps / Math.max(1, goal)))
 }
 
+/* The main goal (R5 E-18): stock's account has one primary goal of the types STEPS, CALORIES, DISTANCE, FLOORS and AZM
+ * (PrimaryGoalType), set on the phone; sensorlogd's HealthMetricsLoader.mainGoal() reads it ({ type, target }). The
+ * day's value of its metric (calories: the energy burned, kcal; distance: metres) from a day summary and the day's
+ * steps, the Today card it stands for and its icon (the cards'). */
+var GOAL_TYPES = ["steps", "calories", "distance", "floors", "azm"]
+function goalType(type) {
+    return GOAL_TYPES.indexOf(String(type)) >= 0 ? String(type) : "steps"
+}
+function goalValue(type, summary, steps) {
+    var s = summary || {}
+    switch (goalType(type)) {
+    case "calories": return Math.max(0, s.energyKcal || 0)
+    case "distance": return Math.max(0, s.distanceM || 0)
+    case "floors": return Math.max(0, s.floors || 0)
+    case "azm": return Math.max(0, s.azm || 0)
+    }
+    return Math.max(0, steps || 0)
+}
+function goalCardKey(type) {
+    return { steps: "steps", calories: "energy", distance: "distance", floors: "floors", azm: "azm" }[goalType(type)]
+}
+function goalIcon(type) {
+    return { steps: "eos-health-steps", calories: "eos-health-energy", distance: "eos-health-distance",
+             floors: "eos-health-floors", azm: "eos-health-azm" }[goalType(type)]
+}
+
 /* Hourly activity: "progress" (hoursMet of hoursTotal) or "done" ('Completed today') once every
  * hour of the day's window has its 250 steps. */
 function hourlyState(hoursMet, hoursTotal) {

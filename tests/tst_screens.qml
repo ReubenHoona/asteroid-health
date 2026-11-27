@@ -63,6 +63,8 @@ Item {
     ConfigurationValue { id: wMax; key: "/org/asteroidos/weather/day0/max-temp"; defaultValue: 0 }
     ConfigurationValue { id: wMin; key: "/org/asteroidos/weather/day0/min-temp"; defaultValue: 0 }
     ConfigurationValue { id: fahrenheit; key: "/org/asteroidos/settings/use-fahrenheit"; defaultValue: false }
+    ConfigurationValue { id: mainType; key: "/org/asteroidos/health/goals/main"; defaultValue: "" }
+    ConfigurationValue { id: floorsGoal; key: "/org/asteroidos/health/goals/floors"; defaultValue: 0 }
 
     TestCase {
         name: "HealthScreens"
@@ -382,6 +384,40 @@ Item {
             var moving = findAll(app, function(o) { return o.running === true && o.interval !== undefined })
             compare(moving.length, 0, "running timers: " + moving.length)
             shot("today-ring")
+        }
+
+        // R5 E-18: the main goal is the phone's type (stock's PrimaryGoalType): the ring shows that metric, in its
+        // unit, and opens its page; with none set it is steps again
+        function test_2b_mainGoalOfAnotherType() {
+            mainType.value = "floors"
+            floorsGoal.value = 8
+            var page = todayPage()
+            page.list.positionViewAtBeginning()
+            tryVerify(function () { var c = byName(page, "goalCard"); return c && c.iconName === "eos-health-floors" }, 5000)
+            var floors = HealthData.summary(HealthData.today).floors || 0
+            var card = byName(page, "goalCard")
+            compare(card.caption, "Floors")
+            compare(byName(page, "goalValue").text, HealthText.number(floors))
+            compare(byName(page, "goalSubtitle").text, HealthText.goalText(floors, 8, "floors"))
+            var arc = byName(page, "goalArc")
+            wait(900)
+            verify(Math.abs(arc.sweepAngle - 360 * Math.min(1, floors / 8)) < 0.5, "sweep " + arc.sweepAngle)
+            shot("today-ring-floors")
+            mouseClick(card, card.width / 2, card.height / 2)
+            currentPage("MetricDetailPage")
+            back()
+            mainType.value = "distance"
+            tryVerify(function () { var c = byName(todayPage(), "goalCard"); return c && c.iconName === "eos-health-distance" }, 5000)
+            compare(byName(todayPage(), "goalValue").text, HealthText.distanceText(HealthData.summary(HealthData.today).distanceM || 0))
+            shot("today-ring-distance")
+            // back to none set; each key's change rebuilds the list once: let both land before the next test scrolls
+            floorsGoal.value = 0
+            wait(800)
+            mainType.value = ""
+            tryVerify(function () { var c = byName(todayPage(), "goalCard"); return c && c.iconName === "eos-health-steps" }, 5000)
+            wait(1500)
+            todayPage().list.positionViewAtBeginning()
+            wait(600)
         }
 
         function test_3_cardColours() {

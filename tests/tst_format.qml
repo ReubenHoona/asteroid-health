@@ -33,6 +33,37 @@ TestCase {
         compare(HealthText.goalText(10120, 10000), "120 over goal")
     }
 
+    // R5 E-18: the main goal of another type than steps (stock's PrimaryGoalType)
+    function test_mainGoal() {
+        compare(F.goalType("floors"), "floors")
+        compare(F.goalType("sleep"), "steps")
+        compare(F.goalType(undefined), "steps")
+        var s = { energyKcal: 1234.4, distanceM: 3520, floors: 7, azm: 12 }
+        compare(F.goalValue("steps", s, 6240), 6240)
+        compare(F.goalValue("calories", s, 6240), 1234.4)
+        compare(F.goalValue("distance", s, 6240), 3520)
+        compare(F.goalValue("floors", s, 6240), 7)
+        compare(F.goalValue("azm", s, 6240), 12)
+        compare(F.goalValue("azm", {}, 6240), 0)
+        compare(F.goalCardKey("calories"), "energy")
+        compare(F.goalCardKey("azm"), "azm")
+        compare(F.goalCardKey("x"), "steps")
+        compare(F.goalIcon("floors"), "eos-health-floors")
+        compare(F.goalIcon("calories"), "eos-health-energy")
+        compare(HealthText.goalText(7, 10, "floors"), "3 left")
+        compare(HealthText.goalText(1234.4, 2000, "calories"), "766 left")
+        // a distance in the locale's unit, compared in tens of metres
+        compare(HealthText.goalText(3520, 8047, "distance"), HealthText.distanceText(4530) + " left")
+        compare(HealthText.goalText(8050, 8047, "distance"), "Goal met")
+        compare(HealthText.goalText(9050, 8047, "distance"), HealthText.distanceText(1000) + " over goal")
+        compare(HealthText.goalValueText("distance", 3520), HealthText.distanceText(3520))
+        compare(HealthText.goalValueText("calories", 1234.4), "1,234")
+        compare(HealthText.goalValueText("steps", 6240), "6,240")
+        compare(HealthText.goalCaption("azm"), "Active Zone Minutes")
+        compare(HealthText.goalCaption("calories"), "Energy burned")
+        compare(HealthText.goalCaption(undefined), "Steps")
+    }
+
     function test_hourly() {
         compare(F.hourlyState(3, 9).state, "progress")
         compare(F.hourlyState(9, 9).state, "done")

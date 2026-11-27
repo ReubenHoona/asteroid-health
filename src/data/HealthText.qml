@@ -29,19 +29,41 @@ QtObject {
     }
 
     // the main goal's subtitle (health-fitness-02): '%1$s left' / 'Goal met' / '%1$s over goal'
-    // (plurals 0x7f120121, 0x7f1404d0 'Goal met!' is the celebration; 0x7f140dbf, 0x7f140dd7)
-    function goalText(steps, goal) {
-        var g = Format.goalState(steps, goal)
+    // (plurals 0x7f120121, 0x7f1404d0 'Goal met!' is the celebration; 0x7f140dbf, 0x7f140dd7); the amount in the
+    // main goal's unit (R5 E-18: type, steps by default; a distance in metres is written in the locale's unit)
+    function goalText(steps, goal, type) {
+        var distance = Format.goalType(type) === "distance"
+        // a distance compared in tens of metres (the text has two decimals of a kilometre or mile)
+        var g = distance ? Format.goalState(steps / 10, goal / 10) : Format.goalState(steps, goal)
+        var amount = distance ? distanceText(g.amount * 10) : number(g.amount)
         if (g.state === "left")
             //% "%1 left"
             //: %1 is a number of steps
-            return qsTrId("id-goal-left").arg(number(g.amount))
+            return qsTrId("id-goal-left").arg(amount)
         if (g.state === "met")
             //% "Goal met"
             return qsTrId("id-goal-met")
         //% "%1 over goal"
         //: %1 is a number of steps
-        return qsTrId("id-goal-over").arg(number(g.amount))
+        return qsTrId("id-goal-over").arg(amount)
+    }
+
+    // the main goal's value in its ring (R5 E-18): steps, Cal, floors and minutes as whole numbers, a distance with
+    // two decimals and its unit
+    function goalValueText(type, value) {
+        if (Format.goalType(type) === "distance")
+            return distanceText(value)
+        return number(value)
+    }
+    // the main goal's name under its value: the Today card's title of its metric
+    function goalCaption(type) {
+        switch (Format.goalType(type)) {
+        case "calories": return qsTrId("id-energy-burned")
+        case "distance": return qsTrId("id-distance")
+        case "floors": return qsTrId("id-floors")
+        case "azm": return qsTrId("id-azm")
+        }
+        return qsTrId("id-steps")
     }
 
     // Hourly activity's subtitle: '%1$d of %2$d hr' / 'Completed today' (0x7f140c82)

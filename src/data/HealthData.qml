@@ -9,6 +9,7 @@ import QtQuick
 import org.asteroid.sensorlogd
 
 import "HealthStats.js" as Stats
+import "HealthFormat.js" as Format
 
 /*
  * The data of every Health page, read once and shared: the day summaries of sensorlogd's
@@ -112,6 +113,15 @@ QtObject {
         if (_store.days[key] === undefined)
             _store.days[key] = { date: Stats.addDays(date, 0), value: metricsLoader.summary(Stats.addDays(date, 0)) }
         return _store.days[key].value
+    }
+
+    // the main goal, { type: steps, calories, distance, floors or azm; target } (R5 E-18: the phone's; steps, the
+    // step goal, when it has set none)
+    function mainGoal() {
+        var g = metricsLoader.mainGoal()
+        if (!g || Format.goalType(g.type) === "steps")
+            return { type: "steps", target: stepGoal }
+        return { type: Format.goalType(g.type), target: Math.max(1, Number(g.target) || 1) }
     }
 
     // the steps of a day; today's count may be ahead of the log (the sensor's live count)
