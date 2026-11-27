@@ -946,5 +946,23 @@ Item {
             // no sensor is on while the list is the page: the heart rate sensor is the heart rate page's
             compare(find(app, "HrmSensor"), null)
         }
+
+        // A change of the Health profile after the first read is seen on every day HealthData keeps (it
+        // keeps the days before yesterday when the files change), not only today's and yesterday's
+        function test_g_profileChangeSeenOnEveryDay() {
+            var old = Stats.addDays(HealthData.today, -3)
+            var h0 = pHeight.value
+            var first = HealthData.summary(old).strideM
+            compare(HealthData.metrics.summary(old).strideM, first)
+            pHeight.value = h0 === 190 ? 185 : 190
+            tryVerify(function () {
+                var m = HealthData.metrics.summary(old).strideM
+                return m !== first && HealthData.summary(old).strideM === m
+            }, 5000, "the new height on a day read before it")
+            pHeight.value = h0
+            tryVerify(function () {
+                return HealthData.metrics.summary(old).strideM === first && HealthData.summary(old).strideM === first
+            }, 5000, "the height as it was")
+        }
     }
 }

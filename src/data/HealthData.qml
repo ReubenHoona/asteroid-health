@@ -38,12 +38,16 @@ QtObject {
 
     // what was read, by day (plain objects: filling the cache while a page's binding is evaluated must
     // not count as a change)
-    readonly property var _store: ({ days: {}, hr: {}, resting: {}, sleep: null, workouts: {}, skin: {}, skinWeek: {} })
+    readonly property var _store: ({ days: {}, hr: {}, resting: {}, sleep: null, workouts: {}, skin: {}, skinWeek: {},
+                                     zoneWeek: {} })
 
     property LoggerSettings _logger: LoggerSettings { id: logger }
     property HealthMetricsLoader _metrics: HealthMetricsLoader {
         id: metricsLoader
         onDataChanged: data.touch()
+        // a key of the Health profile changed: every day's numbers may be others, not only today's and
+        // yesterday's (dataChanged follows)
+        onProfileChanged: data._store.days = {}
     }
     property SleepDataLoader _sleepLoader: SleepDataLoader {
         id: sleepLoader
@@ -97,6 +101,7 @@ QtObject {
         _store.workouts = {}
         _store.skin = {}
         _store.skinWeek = {}
+        _store.zoneWeek = {}
         today = t
         version++
     }
@@ -148,13 +153,19 @@ QtObject {
         return _store.sleep
     }
 
-    // the Active Zone Minutes of the week (Monday to `date`), as HealthMetricsLoader.azmWeek, from
-    // the cached summaries
+    // the Active Zone Minutes of the week (Monday to `date`), as HealthMetricsLoader.azmWeek: the days'
+    // zone minutes from one read of the week (HealthMetricsLoader.zoneDays, the numbers of the day
+    // summaries without their steps and barometer files), cached until the files change
     function azmWeek(date) {
+        var key = Stats.dayKey(date)
+        if (_store.zoneWeek[key] === undefined) {
+            var dow = (date.getDay() + 6) % 7
+            _store.zoneWeek[key] = metricsLoader.zoneDays(Stats.addDays(date, -dow), Stats.addDays(date, 0))
+        }
+        var days = _store.zoneWeek[key]
         var total = 0
-        var dow = (date.getDay() + 6) % 7
-        for (var i = dow; i >= 0; i--)
-            total += summary(Stats.addDays(date, -i)).azm || 0
+        for (var i = 0; i < days.length; i++)
+            total += days[i].azm || 0
         return total
     }
 

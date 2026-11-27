@@ -4,7 +4,8 @@
  *
  * The image's sensorlogd loaders on the fixtures of make-fixtures.py (HOME),
  * through HealthStats.js: malformed lines, a missing day, a single reading;
- * the resting heart rate of a day from sensorlogd's daily rows (health.db).
+ * the resting heart rate of a day from sensorlogd's daily rows (health.db);
+ * the week's Active Zone Minutes from one read.
  */
 
 import QtQuick
@@ -12,6 +13,7 @@ import QtTest
 
 import org.asteroid.sensorlogd
 
+import "../src/data"
 import "../src/data/HealthStats.js" as S
 
 TestCase {
@@ -120,5 +122,26 @@ TestCase {
         // written 5 minutes before the fixtures were made, just before the run
         var m = S.minutesAgo(r.latestTime, Date.now() / 1000)
         verify(m >= 5 && m <= 8, "minutes ago " + m)
+    }
+
+    // The Today list's week of Active Zone Minutes: one read of the days since Monday (zoneDays), the
+    // numbers of each day's summary
+    function test_azmWeekIsOneReadOfTheDays() {
+        var t = new Date()
+        var dow = (t.getDay() + 6) % 7
+        var days = metrics.zoneDays(S.addDays(t, -dow), t)
+        compare(days.length, dow + 1)
+        var sum = 0
+        for (var i = 0; i <= dow; i++) {
+            var s = metrics.summary(S.addDays(t, i - dow))
+            compare(S.dayKey(days[i].date), S.dayKey(S.addDays(t, i - dow)))
+            compare(days[i].azm, s.azm)
+            compare(days[i].zoneModerate, s.zoneModerate)
+            compare(days[i].zoneVigorous, s.zoneVigorous)
+            sum += s.azm
+        }
+        compare(metrics.azmWeek(t), sum)
+        compare(HealthData.azmWeek(t), sum)
+        console.log("Active Zone Minutes since Monday: " + sum)
     }
 }
