@@ -18,7 +18,8 @@ import "../ui"
  * energy, distance, floors or Active Zone Minutes, R5 E-18; a tap opens that metric's page), then one
  * card per metric in stock's order: Steps, Energy burned, Distance, Floors, Active Zone Minutes,
  * Exercise days (stock's stat 6, EXERCISE: uxo.java; M4 WO-10), Hourly activity, Heart rate, Resting
- * heart rate, Sleep, Skin temp variation (stock's stat 14, SKIN_TEMP, HEALTH: uxx.java; M4 WO-13). No title (the
+ * heart rate, Sleep, Skin temp variation (stock's stat 14, SKIN_TEMP, HEALTH: uxx.java; M4 WO-13), Cardio load (R5
+ * E-09: the day's load and its target, CardioLoadCardViewModel). No title (the
  * curved time of the app sits at the top as in the other apps). A tap on a card says which one it is: opened(key).
  */
 Item {
@@ -129,6 +130,12 @@ Item {
         // "Last sleep session" under it; the thermometer with an arrow up above the range, down below it
         out.push(card("skintemp", tSkin, Format.skinTempIcon(skin.state), "health", HealthText.skinTempStateText(skin),
                       "", Format.skinTempHasValue(skin.state) ? sLastSleep : "", true))
+        // stock's Cardio load card: the day's load, the target under it (R5 E-09)
+        var cardio = HealthData.cardioLoad(t)
+        //% "Cardio load"
+        var tCardio = qsTrId("id-cardio-load")
+        out.push(card("cardioload", tCardio, "ms-monitor_heart", "fitness", HealthText.number(cardio.load || 0), "",
+                      HealthText.cardioTargetText(cardio)))
         out.push({ type: "settings", key: "settings" })
         return out
     }

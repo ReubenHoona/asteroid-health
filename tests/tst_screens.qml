@@ -300,7 +300,7 @@ Item {
             startApp()
             var page = todayPage()
             compare(HealthData.stepGoal, 8000)
-            compare(page.rows.length, 13)
+            compare(page.rows.length, 14)
             shot("today-top")
         }
 
@@ -308,9 +308,9 @@ Item {
         function test_1_todayList() {
             var page = todayPage()
             var keys = page.rows.map(function(r) { return r.type + ":" + r.key })
-            compare(keys.join(" "), "goal:steps card:steps card:energy card:distance card:floors card:azm card:exercise card:hourly card:heartrate card:resting card:sleep card:skintemp settings:settings")
+            compare(keys.join(" "), "goal:steps card:steps card:energy card:distance card:floors card:azm card:exercise card:hourly card:heartrate card:resting card:sleep card:skintemp card:cardioload settings:settings")
             var titles = page.rows.filter(function(r) { return r.type === "card" }).map(function(r) { return r.title })
-            compare(titles.join("|"), "Steps|Energy burned|Distance|Floors|Active Zone Minutes|Exercise days|Hourly activity|Heart rate|Resting heart rate|Sleep|Skin temp variation")
+            compare(titles.join("|"), "Steps|Energy burned|Distance|Floors|Active Zone Minutes|Exercise days|Hourly activity|Heart rate|Resting heart rate|Sleep|Skin temp variation|Cardio load")
             var steps = HealthData.stepsOf(HealthData.today)
             verify(steps > 1000)
             var r = page.rows
@@ -353,7 +353,7 @@ Item {
             compare(r[11].icon, "eos-health-skintemp")
             // stock's categories: FITNESS, HEALTH, WELLNESS (health-fitness-20)
             var cats = page.rows.filter(function(x) { return x.type === "card" }).map(function(x) { return x.category })
-            compare(cats.join(" "), "fitness fitness fitness fitness fitness fitness fitness health health wellness health")
+            compare(cats.join(" "), "fitness fitness fitness fitness fitness fitness fitness health health wellness health fitness")
             // no 'Overview' sentence header, no 'Heartrate' preview: the list starts with the ring
             var all = texts(page)
             verify(all.indexOf("Overview") < 0)
@@ -424,7 +424,7 @@ Item {
             var page = todayPage()
             var want = { steps: "#43DCD0", energy: "#43DCD0", distance: "#43DCD0", floors: "#43DCD0", azm: "#43DCD0",
                          exercise: "#43DCD0", hourly: "#43DCD0", heartrate: "#2BC7F7", resting: "#2BC7F7", sleep: "#D8B9FF",
-                         skintemp: "#2BC7F7" }
+                         skintemp: "#2BC7F7", cardioload: "#43DCD0" }
             for (var key in want) {
                 rowItem(page, key)
                 var card = byName(page, "card-" + key)
@@ -475,7 +475,7 @@ Item {
                           floors: "MetricDetailPage", azm: "MetricDetailPage", exercise: "ExerciseDaysPage",
                           hourly: "MetricDetailPage",
                           heartrate: "HeartrateDetailPage", resting: "RestingHeartRatePage", sleep: "SleepDetailPage",
-                          skintemp: "SkinTempPage",
+                          skintemp: "SkinTempPage", cardioload: "CardioLoadPage",
                           settings: "HealthSettingsPage" }
             for (var key in pages) {
                 var page = openCard(key, pages[key])
@@ -783,6 +783,36 @@ Item {
             back()
         }
 
+        // R5 E-09: the Cardio load card (the last of the list) and its page: the day's load, its target or the days to
+        // one, the week
+        function test_9c_cardioLoad() {
+            var c = HealthData.cardioLoad(HealthData.today)
+            var page = todayPage()
+            var r = page.rows
+            var row = r[r.length - 2]
+            compare(row.key, "cardioload")
+            compare(row.title, "Cardio load")
+            compare(row.value, HealthText.number(c.load))
+            compare(row.subtitle, HealthText.cardioTargetText(c))
+            var p = openCard("cardioload", "CardioLoadPage")
+            compare(p.title, "Cardio load")
+            noTimers(p, "cardio load")
+            var today = byName(p, "cardioToday")
+            compare(today.valueLabel.text, HealthText.number(c.load))
+            if (c.hasTarget) {
+                compare(today.noteLabel.text, HealthText.cardioStateText(c))
+                compare(today.noteBottom, HealthText.cardioTargetText(c))
+            } else {
+                compare(today.noteLabel.text, HealthText.cardioTargetText(c))
+                compare(today.noteBottom, "")
+            }
+            compare(byName(p, "cardioWeekChart").days.length, 7)
+            colorIs(today.valueLabel.color, "#43DCD0")
+            compare(byName(p, "cardioRange").visible, c.hasTarget === true)
+            shot("cardio-load")
+            back()
+        }
+
         // M4 WO-13: the Skin temp variation page (stock SkinTempDetailsViewModel): the state, the week against the
         // personal range, 'In range this week'
         function test_9b_skinTemp() {
@@ -1002,7 +1032,7 @@ Item {
         function test_f_restart() {
             startApp()
             var page = todayPage()
-            compare(page.rows.length, 13)
+            compare(page.rows.length, 14)
             noTimers(page, "today")
             // no sensor is on while the list is the page: the heart rate sensor is the heart rate page's
             compare(find(app, "HrmSensor"), null)

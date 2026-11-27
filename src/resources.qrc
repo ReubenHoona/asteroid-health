@@ -22,6 +22,7 @@
         <file>exercise/ExerciseDaysPage.qml</file>
         <file>sleep/SleepDetailPage.qml</file>
         <file>skintemp/SkinTempPage.qml</file>
+        <file>cardioload/CardioLoadPage.qml</file>
         <file>morning/MorningBriefPage.qml</file>
         <file>settings/HealthSettingsPage.qml</file>
         <file>settings/StepGoalPage.qml</file>

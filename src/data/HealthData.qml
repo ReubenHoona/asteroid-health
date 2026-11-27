@@ -48,7 +48,7 @@ QtObject {
     // what was read, by day (plain objects: filling the cache while a page's binding is evaluated must
     // not count as a change)
     readonly property var _store: ({ days: {}, hr: {}, resting: {}, sleep: null, workouts: {}, skin: {}, skinWeek: {},
-                                     zoneWeek: {}, inactive: {} })
+                                     zoneWeek: {}, inactive: {}, cardio: {} })
 
     property LoggerSettings _logger: LoggerSettings { id: logger }
     property HealthMetricsLoader _metrics: HealthMetricsLoader {
@@ -112,6 +112,7 @@ QtObject {
         _store.skinWeek = {}
         _store.zoneWeek = {}
         _store.inactive = {}
+        _store.cardio = {}
         today = t
         version++
     }
@@ -143,6 +144,15 @@ QtObject {
                                      minutes: Number(h.inactiveMin) || 0 }
         }
         return _store.inactive[key]
+    }
+
+    // a day's cardio load and its target (R5 E-09: sensorlogd's HealthMetricsLoader.cardioLoad), cached until the
+    // files change
+    function cardioLoad(date) {
+        var key = Stats.dayKey(date)
+        if (_store.cardio[key] === undefined)
+            _store.cardio[key] = metricsLoader.cardioLoad(Stats.addDays(date, 0))
+        return _store.cardio[key]
     }
 
     // the steps of a day; today's count may be ahead of the log (the sensor's live count)

@@ -701,6 +701,40 @@
             <source>Most inactive today</source>
             <translation>Most inactive today</translation>
         </message>
+        <message id="id-cardio-load">
+            <source>Cardio load</source>
+            <translation>Cardio load</translation>
+        </message>
+        <message id="id-cardio-target">
+            <source>Target %1–%2</source>
+            <extracomment>%1 and %2 are the ends of the day&apos;s target cardio load</extracomment>
+            <translation>Target %1–%2</translation>
+        </message>
+        <message id="id-cardio-target-in-a-day">
+            <source>See target load in 1 day</source>
+            <translation>See target load in 1 day</translation>
+        </message>
+        <message id="id-cardio-target-in-days">
+            <source>See target load in %1 days</source>
+            <extracomment>%1 is a number of days with a cardio load still needed for a target</extracomment>
+            <translation>See target load in %1 days</translation>
+        </message>
+        <message id="id-cardio-in-target">
+            <source>In target</source>
+            <translation>In target</translation>
+        </message>
+        <message id="id-cardio-above-target">
+            <source>Above target</source>
+            <translation>Above target</translation>
+        </message>
+        <message id="id-cardio-below-target">
+            <source>Below target</source>
+            <translation>Below target</translation>
+        </message>
+        <message id="id-cardio-target-range">
+            <source>Target range</source>
+            <translation>Target range</translation>
+        </message>
         <message id="id-skin-temp-variation">
             <source>Skin temp variation</source>
             <translation>Skin temp variation</translation>

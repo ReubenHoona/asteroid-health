@@ -66,6 +66,35 @@ QtObject {
         return qsTrId("id-steps")
     }
 
+    // Cardio load (R5 E-09): the target ('Target %1$d–%2$d' 0x7f140138) or, while there is none, the days still
+    // needed for one ('See target load in %d days', plurals 0x7f120006); the day against it ('In target' 0x7f140141,
+    // 'Above target' 0x7f140137, 'Below target': the words of 0x7f14090d)
+    function cardioTargetText(c) {
+        if (!c)
+            return ""
+        if (c.hasTarget)
+            //% "Target %1–%2"
+            //: %1 and %2 are the ends of the day's target cardio load
+            return qsTrId("id-cardio-target").arg(number(c.low)).arg(number(c.high))
+        if (c.daysLeft === 1)
+            //% "See target load in 1 day"
+            return qsTrId("id-cardio-target-in-a-day")
+        //% "See target load in %1 days"
+        //: %1 is a number of days with a cardio load still needed for a target
+        return qsTrId("id-cardio-target-in-days").arg(c.daysLeft)
+    }
+    function cardioStateText(c) {
+        switch (c ? c.state : "") {
+        //% "In target"
+        case "in": return qsTrId("id-cardio-in-target")
+        //% "Above target"
+        case "above": return qsTrId("id-cardio-above-target")
+        //% "Below target"
+        case "below": return qsTrId("id-cardio-below-target")
+        }
+        return ""
+    }
+
     // the sleep goal under the Sleep card and the Sleep page's night (stock's card, aarf.java:441: 'Goal: %1$s',
     // 0x7f140127, with the goal's duration)
     function sleepGoalText(minutes) {

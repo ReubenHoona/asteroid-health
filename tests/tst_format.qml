@@ -33,6 +33,18 @@ TestCase {
         compare(HealthText.goalText(10120, 10000), "120 over goal")
     }
 
+    // R5 E-09: the cardio load's target and state words
+    function test_cardioTexts() {
+        compare(HealthText.cardioTargetText({ hasTarget: true, low: 32, high: 52, daysLeft: 0 }), "Target 32–52")
+        compare(HealthText.cardioTargetText({ hasTarget: false, daysLeft: 5 }), "See target load in 5 days")
+        compare(HealthText.cardioTargetText({ hasTarget: false, daysLeft: 1 }), "See target load in 1 day")
+        compare(HealthText.cardioTargetText(null), "")
+        compare(HealthText.cardioStateText({ state: "in" }), "In target")
+        compare(HealthText.cardioStateText({ state: "above" }), "Above target")
+        compare(HealthText.cardioStateText({ state: "below" }), "Below target")
+        compare(HealthText.cardioStateText({ state: "" }), "")
+    }
+
     // R5 E-18: the main goal of another type than steps (stock's PrimaryGoalType)
     function test_mainGoal() {
         compare(F.goalType("floors"), "floors")
