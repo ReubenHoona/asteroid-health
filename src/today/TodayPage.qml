@@ -19,6 +19,8 @@ import "../ui"
  * Exercise days (stock's stat 6, EXERCISE: uxo.java; M4 WO-10), Hourly activity, Heart rate, Resting
  * heart rate, Sleep, Skin temp variation (stock's stat 14, SKIN_TEMP, HEALTH: uxx.java; M4 WO-13). No title (the
  * curved time of the app sits at the top as in the other apps). A tap on a card says which one it is: opened(key).
+ * Last, once a phone ended a sync here, stock's sync section (SyncRow, R5 E-08); the list's opening asks for a
+ * sync (stock WEAR_TODAY_APP_OPEN, mri.java:207-211).
  */
 Item {
     id: page
@@ -121,8 +123,14 @@ Item {
         out.push(card("skintemp", tSkin, Format.skinTempIcon(skin.state), "health", HealthText.skinTempStateText(skin),
                       "", Format.skinTempHasValue(skin.state) ? sLastSleep : "", true))
         out.push({ type: "settings", key: "settings" })
+        if (syncRow.shown)
+            out.push({ type: "sync", key: "sync" })
         return out
     }
+
+    // the sync section's state, kept here so that the list's row and the opening's request read one place
+    SyncRow { id: syncRow; visible: false; width: 0 }
+    Component.onCompleted: if (syncRow.shown) syncRow.ask("today")
 
     ScalingList {
         id: list
@@ -140,7 +148,15 @@ Item {
                 id: inner
                 width: row.width
                 sourceComponent: !row.modelData ? null : row.modelData.type === "goal" ? goalComponent :
-                                 row.modelData.type === "settings" ? settingsComponent : cardComponent
+                                 row.modelData.type === "settings" ? settingsComponent :
+                                 row.modelData.type === "sync" ? syncComponent : cardComponent
+            }
+            Component {
+                id: syncComponent
+                SyncRow {
+                    objectName: "syncRow"
+                    width: row.width
+                }
             }
             Component {
                 id: settingsComponent

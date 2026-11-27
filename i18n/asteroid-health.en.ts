@@ -758,5 +758,32 @@
             <extracomment>%1 is the nights of this week in the personal range, %2 the nights with a value (stock plurals 0x7f120123)</extracomment>
             <translation>%1 of %2 days</translation>
         </message>
+        <message id="id-sync-never">
+            <source>- -</source>
+            <translation>- -</translation>
+        </message>
+        <message id="id-sync-syncing">
+            <source>Syncing</source>
+            <translation>Syncing</translation>
+        </message>
+        <message id="id-sync-failed">
+            <source>Can&apos;t Sync Data</source>
+            <translation>Can&apos;t Sync Data</translation>
+        </message>
+        <message id="id-sync-last">
+            <source>Last synced
+ %1</source>
+            <extracomment>%1 is when: a time today, else a date</extracomment>
+            <translation>Last synced
+ %1</translation>
+        </message>
+        <message id="id-sync-retry">
+            <source>Retry</source>
+            <translation>Retry</translation>
+        </message>
+        <message id="id-sync-button">
+            <source>Sync</source>
+            <translation>Sync</translation>
+        </message>
     </context>
 </TS>

@@ -15,6 +15,7 @@
         <file>ui/MetricCard.qml</file>
         <file>ui/GoalCard.qml</file>
         <file>today/TodayPage.qml</file>
+        <file>today/SyncRow.qml</file>
         <file>stepCounter/StepsDetailPage.qml</file>
         <file>heartrate/HeartrateDetailPage.qml</file>
         <file>heartrate/RestingHeartRatePage.qml</file>
