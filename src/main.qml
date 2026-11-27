@@ -64,6 +64,7 @@ Application {
         "heartrate": "heartrate/HeartrateDetailPage.qml",
         "resting": "heartrate/RestingHeartRatePage.qml",
         "sleep": "sleep/SleepDetailPage.qml",
+        "skintemp": "skintemp/SkinTempPage.qml",
         "settings": "settings/HealthSettingsPage.qml",
         "morning": "morning/MorningBriefPage.qml"
     })

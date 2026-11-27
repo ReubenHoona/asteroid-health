@@ -30,6 +30,7 @@ Card {
     Accessible.name: title + " " + value + " " + unit + " " + subtitle
 
     Row {
+        id: head
         width: parent.width
         spacing: Theme.space.s
         Icon {
@@ -54,6 +55,10 @@ Card {
         spacing: Theme.dp(3)
         Label {
             id: valueLabel
+            // a text value (a state such as "Wear to sleep 3 more times") wraps within the card
+            width: metric.textValue ? Math.min(implicitWidth, head.width) : implicitWidth
+            wrapMode: metric.textValue ? Text.Wrap : Text.NoWrap
+            maximumLineCount: 2
             text: metric.value
             role: metric.textValue ? "titleMedium" : "numeralExtraSmall"
             color: metric.tones.main

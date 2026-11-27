@@ -106,6 +106,11 @@ Item {
                 compare(r[6].value, "0")
                 compare(r[6].subtitle, "0 of 3 days this week")
                 compare(r[7].subtitle, "0 of 9 hr")
+                compare(r[11].key, "skintemp")                              // M4 WO-13: no night yet
+                compare(r[11].value, "Wear your watch to sleep")
+                compare(r[11].subtitle, "")
+            } else {
+                compare(r[11].value, "In range")                            // the stale fixture has the nights
             }
         }
 

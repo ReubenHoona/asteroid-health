@@ -151,6 +151,43 @@ TestCase {
         compare(HealthText.ageText(now / 1000 - 59 * 60, now), "59 min ago")
     }
 
+    // M4 WO-13: the skin temperature variation's numbers and words
+    function test_skinTemp() {
+        compare(F.skinTempDelta(0.31, false), 0.3)
+        compare(F.skinTempDelta(-0.26, false), -0.3)
+        compare(F.skinTempDelta(0.5, true), 0.9)
+        compare(F.skinTempDelta(-1.14, true), -2.1)
+        compare(HealthText.skinTempValueText(0.31, false), "0.3°C")
+        compare(HealthText.skinTempValueText(-0.26, true), "-0.5°F")
+        compare(F.skinTempHasValue("inRange"), true)
+        compare(F.skinTempHasValue("calibrating"), false)
+        compare(F.skinTempIcon("aboveRange"), "eos-health-skintemp-up")
+        compare(F.skinTempIcon("belowRange"), "eos-health-skintemp-down")
+        compare(F.skinTempIcon("tracking"), "eos-health-skintemp")
+        var week = [{ hasVariation: false }, { hasVariation: true, devC: 0.1, loC: -0.5, hiC: 0.5, state: "inRange" },
+                    { hasVariation: true, devC: 1.14, loC: -0.5, hiC: 0.5, state: "aboveRange" }]
+        compare(F.skinTempInRange(week).inRange, 1)
+        compare(F.skinTempInRange(week).total, 2)
+        compare(F.skinTempTicks(week, false), [-2, 0, 2])
+        compare(F.skinTempTicks([{ hasVariation: true, devC: 0.2, loC: -0.6, hiC: 0.6 }], false), [-1, 0, 1])
+        compare(F.skinTempTicks(week, true), [-3, 0, 3])
+        compare(F.skinTempTicks([], false), [-1, 0, 1])
+        compare(HealthText.skinTempStateText({ state: "inRange" }), "In range")
+        compare(HealthText.skinTempStateText({ state: "aboveRange" }), "Above range")
+        compare(HealthText.skinTempStateText({ state: "belowRange" }), "Below range")
+        compare(HealthText.skinTempStateText({ state: "calibrating", nightsLeft: 3 }), "Wear to sleep 3 more times")
+        compare(HealthText.skinTempStateText({ state: "calibrating", nightsLeft: 1 }), "Wear to sleep one more time")
+        compare(HealthText.skinTempStateText({ state: "tracking" }), "Tracking…")
+        compare(HealthText.skinTempStateText({ state: "analyzing" }), "Analyzing…")
+        compare(HealthText.skinTempStateText({ state: "noData" }), "Wear your watch to sleep")
+        compare(HealthText.skinTempStateText(undefined), "Wear your watch to sleep")
+        compare(HealthText.skinTempExplanation("calibrating"),
+                "Skin temperature variation is the fluctuation in temperature taken from your wrist while you sleep")
+        compare(HealthText.skinTempExplanation("aboveRange"), "May be associated with warmer surroundings or other factors")
+        compare(HealthText.skinTempExplanation("belowRange"), "May be associated with cooler surroundings or other factors")
+        compare(HealthText.skinTempExplanation("inRange"), "")
+    }
+
     function test_weather() {
         compare(F.weatherIcon(800), "ios-sunny-outline")
         compare(F.weatherIcon(801), "ios-partly-sunny-outline")

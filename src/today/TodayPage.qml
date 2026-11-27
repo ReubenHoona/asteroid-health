@@ -17,8 +17,8 @@ import "../ui"
  * list (a ScalingList: the TransformingLazyColumn's edge scaling) with the main goal ring, then one
  * card per metric in stock's order: Steps, Energy burned, Distance, Floors, Active Zone Minutes,
  * Exercise days (stock's stat 6, EXERCISE: uxo.java; M4 WO-10), Hourly activity, Heart rate, Resting
- * heart rate, Sleep. No title (the curved time of the app sits at
- * the top as in the other apps). A tap on a card says which one it is: opened(key).
+ * heart rate, Sleep, Skin temp variation (stock's stat 14, SKIN_TEMP, HEALTH: uxx.java; M4 WO-13). No title (the
+ * curved time of the app sits at the top as in the other apps). A tap on a card says which one it is: opened(key).
  */
 Item {
     id: page
@@ -46,6 +46,7 @@ Item {
         var hr = HealthData.heartDay(t)
         var resting = HealthData.restingOf(t)
         var night = HealthData.sleep()
+        var skin = HealthData.skinTemp(t)
         var out = []
 
         //% "Steps"
@@ -82,6 +83,10 @@ Item {
         var tSleep = qsTrId("id-sleep")
         //% "Wear your watch to sleep"
         var sNoSleep = qsTrId("id-wear-to-sleep")
+        //% "Skin temp variation"
+        var tSkin = qsTrId("id-skin-temp-variation")
+        //% "Last sleep session"
+        var sLastSleep = qsTrId("id-last-sleep-session")
 
         out.push({ type: "goal", key: "steps", caption: tSteps, value: HealthText.number(steps),
                    subtitle: HealthText.goalText(steps, goal), fraction: Format.goalFraction(steps, goal) })
@@ -111,6 +116,10 @@ Item {
         out.push(card("sleep", tSleep, "eos-health-sleep", "wellness",
                       night.valid ? HealthText.durationText(night.main.asleepMin) : HealthText.none, "",
                       night.valid ? (night.scoreLabel || "") : sNoSleep, night.valid))
+        // stock's card (acbf.java o(), aanu.java): the morning's variation against the personal range as a word,
+        // "Last sleep session" under it; the thermometer with an arrow up above the range, down below it
+        out.push(card("skintemp", tSkin, Format.skinTempIcon(skin.state), "health", HealthText.skinTempStateText(skin),
+                      "", Format.skinTempHasValue(skin.state) ? sLastSleep : "", true))
         out.push({ type: "settings", key: "settings" })
         return out
     }

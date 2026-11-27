@@ -195,6 +195,26 @@ hdb.execute("PRAGMA user_version=1")
 hdb.commit()
 hdb.close()
 
+# M4 WO-13: health.db's skin temperature nights (sensorlogd's skin_temp_night, store/healthDb.cpp), fictional, as the
+# daemon makes them each morning: today-6..today-4 build the baseline (no variation), today-3 in range, today-2 not
+# worn, yesterday above range (+1.1), today in range (+0.3 of +-0.6); no sampling now
+hdb = sqlite3.connect(hdb_path)
+hdb.execute("CREATE TABLE skin_temp_night (wake_date TEXT PRIMARY KEY, start_ms INTEGER NOT NULL, end_ms INTEGER NOT NULL, "
+            "minutes INTEGER NOT NULL DEFAULT 0, mean_c REAL, nights INTEGER NOT NULL DEFAULT 0, baseline_c REAL, "
+            "dev_c REAL, lo_c REAL, hi_c REAL, seq INTEGER NOT NULL DEFAULT 0)")
+SKIN = [  # day, mean, nights before, baseline, variation, range
+    (6, 33.9, 0, None, None, None), (5, 34.1, 1, None, None, None), (4, 33.8, 2, None, None, None),
+    (3, 34.03, 3, 33.93, 0.1, 0.5), (1, 35.1, 4, 33.96, 1.14, 0.5), (0, 34.5, 5, 34.19, 0.31, 0.6),
+]
+for n, (k, mean, nights, base, dev, half) in enumerate(SKIN):
+    hdb.execute("INSERT INTO skin_temp_night VALUES (?, ?, ?, 400, ?, ?, ?, ?, ?, ?, ?)",
+                (D[k].isoformat(), local(D[k + 1] if k + 1 < 7 else D[k] - timedelta(days=1), 23) * 1000,
+                 local(D[k], 7) * 1000, mean, nights, base, dev, -half if half else None, half, 30 + n))
+hdb.execute("INSERT INTO meta VALUES ('skin_temp.on_ms', 0)")
+hdb.execute("INSERT INTO meta VALUES ('skin_temp.off_ms', ?)", (int((now - 5 * 3600) * 1000),))
+hdb.commit()
+hdb.close()
+
 # last night: yesterday 23:10 to today 06:40
 sl_dir = os.path.join(root, "sleep")
 os.makedirs(sl_dir, exist_ok=True)

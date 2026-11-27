@@ -221,6 +221,56 @@ function weatherIcon(id) {
     return "ios-alert-outline"
 }
 
+/* M4 WO-13, the skin temperature variation (asteroid-sensorlogd metrics/skinTemp.h). A variation in deg C as the
+   user's unit shows it, to one decimal (stock yqk.java k(): x 10, rounded); deg F: a difference, x 1.8 */
+function skinTempDelta(c, fahrenheit) {
+    var v = fahrenheit ? c * 9 / 5 : c
+    return Math.round(v * 10) / 10
+}
+
+/* the states that show a night's value, with "Last sleep session" under it (stock: aadz, aaed, aadx) */
+function skinTempHasValue(state) {
+    return state === "inRange" || state === "aboveRange" || state === "belowRange"
+}
+
+/* the card's icon: a thermometer, with an arrow up above the range and down below it (stock's
+   gs_thermometer_gain / _loss) */
+function skinTempIcon(state) {
+    if (state === "aboveRange")
+        return "eos-health-skintemp-up"
+    if (state === "belowRange")
+        return "eos-health-skintemp-down"
+    return "eos-health-skintemp"
+}
+
+/* the week's nights with a value, and those in the range: { inRange, total } ("In range this week") */
+function skinTempInRange(week) {
+    var total = 0
+    var inside = 0
+    for (var i = 0; i < week.length; i++) {
+        if (!week[i].hasVariation)
+            continue
+        total++
+        if (week[i].state === "inRange")
+            inside++
+    }
+    return { inRange: inside, total: total }
+}
+
+/* the week chart's axis: whole degrees either side of 0, at least 1, wide enough for the week's ranges and values */
+function skinTempTicks(week, fahrenheit) {
+    var m = 1
+    for (var i = 0; i < week.length; i++) {
+        var n = week[i]
+        if (!n.hasVariation)
+            continue
+        var far = Math.max(Math.abs(skinTempDelta(n.devC, fahrenheit)), Math.abs(skinTempDelta(n.loC, fahrenheit)),
+                           Math.abs(skinTempDelta(n.hiC, fahrenheit)))
+        m = Math.max(m, Math.ceil(far))
+    }
+    return [-m, 0, m]
+}
+
 /* Kelvin as the weather app shows temperatures: whole degrees Celsius (or Fahrenheit) */
 function temperature(kelvin, fahrenheit) {
     var c = kelvin - 273

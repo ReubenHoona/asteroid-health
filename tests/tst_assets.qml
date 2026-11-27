@@ -57,7 +57,8 @@ Item {
         function test_icons() {
             var names = ["eos-health", "eos-relax", "eos-health-steps", "eos-health-energy", "eos-health-distance",
                          "eos-health-floors", "eos-health-azm", "eos-health-hourly", "eos-health-heart",
-                         "eos-health-resting", "eos-health-sleep"]
+                         "eos-health-resting", "eos-health-sleep", "eos-health-skintemp", "eos-health-skintemp-up",
+                         "eos-health-skintemp-down"]
             for (var i = 0; i < names.length; i++) {
                 var r = ink(names[i])
                 verify(r.n > 200, names[i] + " has ink: " + r.n)

@@ -14,7 +14,8 @@ import "HealthStats.js" as Stats
  * The data of every Health page, read once and shared: the day summaries of sensorlogd's
  * HealthMetricsLoader (steps, distance, energy, floors, zones, Active Zone Minutes, hourly
  * activity), last night's sleep, the heart rate readings of a day, the resting heart rate of a
- * day (sensorlogd's daily estimate), the workouts of a week (WorkoutLoader: health.db) and the
+ * day (sensorlogd's daily estimate), the workouts of a week (WorkoutLoader: health.db), the skin
+ * temperature variation of a morning and its week (HealthMetricsLoader: health.db) and the
  * settings (LoggerSettings: the one steps goal and the Health features).
  *
  * Nothing here runs on a timer. The loaders watch the day files and emit dataChanged() when
@@ -37,7 +38,7 @@ QtObject {
 
     // what was read, by day (plain objects: filling the cache while a page's binding is evaluated must
     // not count as a change)
-    readonly property var _store: ({ days: {}, hr: {}, resting: {}, sleep: null, workouts: {} })
+    readonly property var _store: ({ days: {}, hr: {}, resting: {}, sleep: null, workouts: {}, skin: {}, skinWeek: {} })
 
     property LoggerSettings _logger: LoggerSettings { id: logger }
     property HealthMetricsLoader _metrics: HealthMetricsLoader {
@@ -94,6 +95,8 @@ QtObject {
         _store.resting = {}
         _store.sleep = null
         _store.workouts = {}
+        _store.skin = {}
+        _store.skinWeek = {}
         today = t
         version++
     }
@@ -165,6 +168,22 @@ QtObject {
             _store.workouts[key] = workoutLoader.workouts(Stats.addDays(date, -dow), Stats.addDays(date, 0))
         }
         return _store.workouts[key]
+    }
+
+    // M4 WO-13: the skin temperature variation of a morning as stock's card shows it (HealthMetricsLoader.skinTemp:
+    // state noData, calibrating, tracking, analyzing, inRange, aboveRange, belowRange; nightsLeft; hasVariation, devC,
+    // loC, hiC in deg C), and the seven mornings up to it ({ date, hasVariation, devC, loC, hiC, state }), cached
+    function skinTemp(date) {
+        var key = Stats.dayKey(date)
+        if (_store.skin[key] === undefined)
+            _store.skin[key] = metricsLoader.skinTemp(Stats.addDays(date, 0))
+        return _store.skin[key]
+    }
+    function skinTempWeek(date) {
+        var key = Stats.dayKey(date)
+        if (_store.skinWeek[key] === undefined)
+            _store.skinWeek[key] = metricsLoader.skinTempWeek(Stats.addDays(date, 0))
+        return _store.skinWeek[key]
     }
 
     // the last seven days ending on `end` (a Date): [{date, summary}]

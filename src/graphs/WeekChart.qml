@@ -23,7 +23,8 @@ import "../data/HealthStats.js" as Stats
 import "../theme"
 
 // The last seven days, a bar a day (days: {label, hasData, lo, hi, mark}; mark: a dot at that value,
-// such as the resting heart rate; -1 none), or with `line` a line through the dots of the marks
+// such as the resting heart rate; -1 none, or with hasMark the dot's own flag for values below 0, the skin
+// temperature variation), or with `line` a line through the dots of the marks
 // (the resting heart rate of the week, stock's "Resting heart rate line chart"). A day without data keeps
 // its place with a dash. With `stacks` a bar is the days' minutes in several colours (the heart rate zones):
 // stacks is a list of [{value, color}] per day, from the bottom. The chart is not interactive: stock's
@@ -53,6 +54,9 @@ Item {
 
     function yOf(v) {
         return plotHeight * (1 - (v - axisLo) / Math.max(1e-6, axisHi - axisLo))
+    }
+    function hasMarkOf(d) {
+        return d.hasMark !== undefined ? d.hasMark === true : d.mark >= 0
     }
 
     onDaysChanged: connector.requestPaint()
@@ -112,7 +116,7 @@ Item {
             var open = false
             for (var i = 0; i < chart.days.length; i++) {
                 var d = chart.days[i]
-                if (!d.hasData || d.mark < 0) {
+                if (!d.hasData || !chart.hasMarkOf(d)) {
                     if (open)
                         ctx.stroke()
                     open = false
@@ -173,7 +177,7 @@ Item {
                 }
             }
             Rectangle {
-                visible: d.hasData && d.mark >= 0
+                visible: d.hasData && chart.hasMarkOf(d)
                 width: chart.line ? Theme.dp(8) : bar.width * 0.7
                 height: width
                 radius: width / 2

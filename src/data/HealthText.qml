@@ -106,6 +106,59 @@ QtObject {
         }
     }
 
+    // M4 WO-13: the Skin temp variation card's word for its state (stock aanu.java e(): 'In range' 0x7f1409bc,
+    // 'Above range' 0x7f140022, 'Below range' 0x7f140095, plurals 0x7f12013b 'Wear to sleep one more time' /
+    // '... %1$d more times', 'Tracking…' 0x7f140cee, 'Analyzing…' 0x7f140ce3, 'Wear your watch to sleep' 0x7f140b87)
+    function skinTempStateText(view) {
+        switch (view ? view.state : "") {
+        case "inRange":
+            //% "In range"
+            return qsTrId("id-in-range")
+        case "aboveRange":
+            //% "Above range"
+            return qsTrId("id-above-range")
+        case "belowRange":
+            //% "Below range"
+            return qsTrId("id-below-range")
+        case "calibrating":
+            if (view.nightsLeft === 1)
+                //% "Wear to sleep one more time"
+                return qsTrId("id-wear-to-sleep-one-more")
+            //% "Wear to sleep %1 more times"
+            //: %1 is a number of nights (2 or more)
+            return qsTrId("id-wear-to-sleep-more").arg(view.nightsLeft)
+        case "tracking":
+            //% "Tracking…"
+            return qsTrId("id-tracking")
+        case "analyzing":
+            //% "Analyzing…"
+            return qsTrId("id-analyzing")
+        default:
+            //% "Wear your watch to sleep"
+            return qsTrId("id-wear-to-sleep")
+        }
+    }
+
+    // the line under the state on its page (stock aage.java: 0x7f140eaa while the baseline is made, 0x7f140023
+    // above the range, 0x7f140096 below it)
+    function skinTempExplanation(state) {
+        if (state === "calibrating")
+            //% "Skin temperature variation is the fluctuation in temperature taken from your wrist while you sleep"
+            return qsTrId("id-skin-temp-explained")
+        if (state === "aboveRange")
+            //% "May be associated with warmer surroundings or other factors"
+            return qsTrId("id-skin-temp-warmer")
+        if (state === "belowRange")
+            //% "May be associated with cooler surroundings or other factors"
+            return qsTrId("id-skin-temp-cooler")
+        return ""
+    }
+
+    // a variation with its unit, one decimal: "0.4°C", "-0.3°C" (stock 0x7f140953 '%1$.1f%2$s', 0x7f1408fc/fd)
+    function skinTempValueText(c, fahrenheit) {
+        return Format.skinTempDelta(c, fahrenheit).toLocaleString(locale, "f", 1) + (fahrenheit ? "°F" : "°C")
+    }
+
     // a week: 'Last 7 days' when it ends today
     function weekText(end, today) {
         if (Stats.daysBetween(end, today) === 0)

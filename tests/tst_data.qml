@@ -84,6 +84,29 @@ TestCase {
         compare(metrics.restingHr(), 53)
     }
 
+    // M4 WO-13: the skin temperature variation as sensorlogd's loader reads health.db (the fixtures' nights)
+    function test_skinTemp() {
+        var t = new Date()
+        var v = metrics.skinTemp(t)
+        compare(v.state, "inRange")
+        compare(v.hasVariation, true)
+        compare(v.nightsLeft, 0)
+        verify(Math.abs(v.devC - 0.31) < 1e-9)
+        verify(Math.abs(v.hiC - 0.6) < 1e-9 && Math.abs(v.loC + 0.6) < 1e-9)
+        compare(metrics.skinTemp(S.addDays(t, -1)).state, "aboveRange")
+        compare(metrics.skinTemp(S.addDays(t, -5)).state, "calibrating")
+        compare(metrics.skinTemp(S.addDays(t, -5)).nightsLeft, 2)
+        compare(metrics.skinTemp(S.addDays(t, -6)).nightsLeft, 3)
+        compare(metrics.skinTemp(S.addDays(t, -7)).state, "noData")
+        // the week, the oldest first: four nights without a variation (three of the baseline, one not worn)
+        var w = metrics.skinTempWeek(t)
+        compare(w.length, 7)
+        var states = []
+        for (var i = 0; i < w.length; i++)
+            states.push(w[i].hasVariation ? w[i].state : "-")
+        compare(states.join(" "), "- - - inRange - aboveRange inRange")
+    }
+
     function test_theAlertDefaultsAreStocks() {
         compare(metrics.defaultHighBpm(), 120)
         compare(metrics.defaultLowBpm(), 50)

@@ -692,5 +692,71 @@
             <source>Yoga</source>
             <translation>Yoga</translation>
         </message>
+        <message id="id-skin-temp-variation">
+            <source>Skin temp variation</source>
+            <translation>Skin temp variation</translation>
+        </message>
+        <message id="id-last-sleep-session">
+            <source>Last sleep session</source>
+            <translation>Last sleep session</translation>
+        </message>
+        <message id="id-in-range">
+            <source>In range</source>
+            <translation>In range</translation>
+        </message>
+        <message id="id-above-range">
+            <source>Above range</source>
+            <translation>Above range</translation>
+        </message>
+        <message id="id-below-range">
+            <source>Below range</source>
+            <translation>Below range</translation>
+        </message>
+        <message id="id-wear-to-sleep-one-more">
+            <source>Wear to sleep one more time</source>
+            <translation>Wear to sleep one more time</translation>
+        </message>
+        <message id="id-wear-to-sleep-more">
+            <source>Wear to sleep %1 more times</source>
+            <extracomment>%1 is a number of nights (2 or more)</extracomment>
+            <translation>Wear to sleep %1 more times</translation>
+        </message>
+        <message id="id-tracking">
+            <source>Tracking…</source>
+            <translation>Tracking…</translation>
+        </message>
+        <message id="id-analyzing">
+            <source>Analyzing…</source>
+            <translation>Analyzing…</translation>
+        </message>
+        <message id="id-skin-temp-explained">
+            <source>Skin temperature variation is the fluctuation in temperature taken from your wrist while you sleep</source>
+            <translation>Skin temperature variation is the fluctuation in temperature taken from your wrist while you sleep</translation>
+        </message>
+        <message id="id-skin-temp-warmer">
+            <source>May be associated with warmer surroundings or other factors</source>
+            <translation>May be associated with warmer surroundings or other factors</translation>
+        </message>
+        <message id="id-skin-temp-cooler">
+            <source>May be associated with cooler surroundings or other factors</source>
+            <translation>May be associated with cooler surroundings or other factors</translation>
+        </message>
+        <message id="id-skin-temp-chart">
+            <source>Skin temperature variation chart</source>
+            <translation>Skin temperature variation chart</translation>
+        </message>
+        <message id="id-personal-range">
+            <source>Personal range</source>
+            <translation>Personal range</translation>
+        </message>
+        <message id="id-in-range-this-week">
+            <source>In range this week</source>
+            <translation>In range this week</translation>
+        </message>
+        <message id="id-days-of-days">
+            <source>%1 of %2 days</source>
+            <extracomment>%1 is the nights of this week in the personal range, %2 the nights with a value (stock plurals 0x7f120123)</extracomment>
+            <translation>%1 of %2 days</translation>
+        </message>
     </context>
 </TS>
