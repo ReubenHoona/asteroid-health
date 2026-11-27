@@ -48,7 +48,7 @@ QtObject {
     // what was read, by day (plain objects: filling the cache while a page's binding is evaluated must
     // not count as a change)
     readonly property var _store: ({ days: {}, hr: {}, resting: {}, sleep: null, workouts: {}, skin: {}, skinWeek: {},
-                                     zoneWeek: {} })
+                                     zoneWeek: {}, inactive: {} })
 
     property LoggerSettings _logger: LoggerSettings { id: logger }
     property HealthMetricsLoader _metrics: HealthMetricsLoader {
@@ -111,6 +111,7 @@ QtObject {
         _store.skin = {}
         _store.skinWeek = {}
         _store.zoneWeek = {}
+        _store.inactive = {}
         today = t
         version++
     }
@@ -130,6 +131,18 @@ QtObject {
         if (!g || Format.goalType(g.type) === "steps")
             return { type: "steps", target: stepGoal }
         return { type: Format.goalType(g.type), target: Math.max(1, Number(g.target) || 1) }
+    }
+
+    // a day's longest inactive span (R5 E-21, stock's "Most inactive today"): { startMs, endMs, minutes } (minutes 0:
+    // none), cached until the files change
+    function inactiveOf(date) {
+        var key = Stats.dayKey(date)
+        if (_store.inactive[key] === undefined) {
+            var h = metricsLoader.hourly(Stats.addDays(date, 0))
+            _store.inactive[key] = { startMs: Number(h.inactiveStartMs) || 0, endMs: Number(h.inactiveEndMs) || 0,
+                                     minutes: Number(h.inactiveMin) || 0 }
+        }
+        return _store.inactive[key]
     }
 
     // the steps of a day; today's count may be ahead of the log (the sensor's live count)

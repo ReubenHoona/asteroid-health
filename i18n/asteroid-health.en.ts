@@ -697,6 +697,10 @@
             <extracomment>%1 is the sleep goal, a duration (&quot;8 hr&quot;)</extracomment>
             <translation>Goal: %1</translation>
         </message>
+        <message id="id-most-inactive">
+            <source>Most inactive today</source>
+            <translation>Most inactive today</translation>
+        </message>
         <message id="id-skin-temp-variation">
             <source>Skin temp variation</source>
             <translation>Skin temp variation</translation>

@@ -16,8 +16,8 @@ import "../ui"
 // The detail page of one of the Health cards that has no page of its own: Energy burned, Distance,
 // Floors, Active Zone Minutes and Hourly activity (route details/<stat>, health-fitness-02): today's
 // value, today by the hour where the day has one (Hourly activity: the steps of every hour against the
-// 250 that count), the last 7 days with today's bar brightest, and the week's average. All in the
-// FITNESS colours. `metric` is one of "energy", "distance", "floors", "azm", "hourly".
+// 250 that count, and the day's most inactive span: R5 E-21), the last 7 days with today's bar brightest, and the
+// week's average. All in the FITNESS colours. `metric` is one of "energy", "distance", "floors", "azm", "hourly".
 HealthPage {
     id: page
     property string metric: "energy"
@@ -168,6 +168,20 @@ HealthPage {
         goal: 250
         highlight: page.today.getHours()
         barColor: page.tones.main
+    }
+
+    // stock's "Most inactive today" (HourlyActivityDetailsViewModel, yum.java:425-433: the title, the span's times,
+    // its length; the day's longest sedentary period): sensorlogd's longest worn, still and awake span of the day
+    // (healthMetrics.h longestInactive, a guess at stock's hub-made periods); none: not shown
+    StatBlock {
+        objectName: "mostInactive"
+        readonly property var span: { HealthData.version; return page.metric === "hourly" ? HealthData.inactiveOf(page.today) : null }
+        visible: span !== null && span.minutes > 0
+        //% "Most inactive today"
+        caption: qsTrId("id-most-inactive")
+        value: visible ? HealthText.durationText(span.minutes) : ""
+        valueColor: page.tones.main
+        note: visible ? TimeFormat.time(new Date(span.startMs)) + " - " + TimeFormat.time(new Date(span.endMs)) : ""
     }
 
     SectionLabel {

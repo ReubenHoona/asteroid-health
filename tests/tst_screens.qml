@@ -758,6 +758,28 @@ Item {
             // the week's goal line: the 9 hours that count
             compare(byName(page, "metricWeekChart").goal, 9)
             shot("metric-hourly")
+            // R5 E-21: the day's most inactive span, under the day's chart
+            var span = HealthData.inactiveOf(HealthData.today)
+            var block = byName(page, "mostInactive")
+            compare(block.visible, span.minutes > 0)
+            compare(block.captionLabel.text, "Most inactive today")
+            if (span.minutes === 0) {
+                // the fixture's readings are 10 minutes apart (the watch's come every few seconds), so it has no span
+                // of worn minutes: one is put in the day's cache to see the block as it shows one
+                var t0 = new Date(HealthData.today)
+                t0.setHours(10, 12, 0, 0)
+                span = { startMs: t0.getTime(), endMs: t0.getTime() + 148 * 60000, minutes: 148 }
+                HealthData._store.inactive[Stats.dayKey(HealthData.today)] = span
+                HealthData.version++
+                wait(100)
+            }
+            verify(block.visible)
+            compare(block.valueLabel.text, HealthText.durationText(span.minutes))
+            compare(block.noteLabel.text, TimeFormat.time(new Date(span.startMs)) + " - " + TimeFormat.time(new Date(span.endMs)))
+            verify(block.mapToItem(page, 0, 0).y > chart.mapToItem(page, 0, 0).y)
+            page.flickable.contentY = block.mapToItem(page.flickable.contentItem, 0, 0).y - 120
+            shot("metric-hourly-inactive")
+            HealthData.refresh()
             back()
         }
 
