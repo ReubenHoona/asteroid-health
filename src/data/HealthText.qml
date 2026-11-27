@@ -66,6 +66,14 @@ QtObject {
         return qsTrId("id-steps")
     }
 
+    // the sleep goal under the Sleep card and the Sleep page's night (stock's card, aarf.java:441: 'Goal: %1$s',
+    // 0x7f140127, with the goal's duration)
+    function sleepGoalText(minutes) {
+        //% "Goal: %1"
+        //: %1 is the sleep goal, a duration ("8 hr")
+        return qsTrId("id-sleep-goal").arg(durationText(minutes))
+    }
+
     // Hourly activity's subtitle: '%1$d of %2$d hr' / 'Completed today' (0x7f140c82)
     function hourlyText(met, total) {
         var h = Format.hourlyState(met, total)

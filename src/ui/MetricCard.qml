@@ -25,6 +25,9 @@ Card {
     readonly property var tones: HealthPalette.category(category)
     // the value is text, not a number (a night's "7 hr 12 min"): a smaller type
     property bool textValue: false
+    // a ring round the icon, the share of a goal (0..1; stock's Sleep card: the time asleep against the sleep goal,
+    // aarf.java g(): vhw); below 0: none
+    property real progress: -1
 
     spacing: Theme.dp(2)
     Accessible.name: title + " " + value + " " + unit + " " + subtitle
@@ -33,13 +36,34 @@ Card {
         id: head
         width: parent.width
         spacing: Theme.space.s
-        Icon {
+        Item {
             id: glyph
-            name: metric.iconName
-            color: metric.tones.main
-            width: Theme.size.iconSmall
+            objectName: "cardIcon"
+            width: metric.progress >= 0 ? Theme.size.iconSmall + Theme.dp(8) : Theme.size.iconSmall
             height: width
             anchors.verticalCenter: parent.verticalCenter
+            Icon {
+                anchors.centerIn: parent
+                name: metric.iconName
+                color: metric.tones.main
+                width: Theme.size.iconSmall
+                height: width
+            }
+            ProgressArc {
+                visible: metric.progress >= 0
+                anchors.fill: parent
+                strokeWidth: Theme.dp(2)
+                color: HealthPalette.track
+                sweepAngle: 360
+            }
+            ProgressArc {
+                objectName: "cardRing"
+                visible: metric.progress > 0
+                anchors.fill: parent
+                strokeWidth: Theme.dp(2)
+                color: metric.tones.main
+                sweepAngle: 360 * Math.min(1, Math.max(0, metric.progress))
+            }
         }
         Label {
             width: parent.width - glyph.width - parent.spacing

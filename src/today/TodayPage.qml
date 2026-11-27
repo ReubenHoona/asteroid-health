@@ -34,9 +34,10 @@ Item {
     readonly property var rows: build(HealthData.version)
     readonly property alias list: list
 
-    function card(key, title, icon, category, value, unit, subtitle, textValue) {
+    function card(key, title, icon, category, value, unit, subtitle, textValue, progress) {
         return { type: "card", key: key, title: title, icon: icon, category: category, value: value,
-                 unit: unit, subtitle: subtitle, textValue: textValue === true }
+                 unit: unit, subtitle: subtitle, textValue: textValue === true,
+                 progress: progress === undefined ? -1 : progress }
     }
 
     function build(version) {
@@ -83,8 +84,8 @@ Item {
         var tResting = qsTrId("id-resting-heart-rate")
         //% "Sleep"
         var tSleep = qsTrId("id-sleep")
-        //% "Wear your watch to sleep"
-        var sNoSleep = qsTrId("id-wear-to-sleep")
+        //% "No data yet"
+        var sNoData = qsTrId("id-no-data-yet")
         //% "Skin temp variation"
         var tSkin = qsTrId("id-skin-temp-variation")
         //% "Last sleep session"
@@ -117,9 +118,13 @@ Item {
                       fresh ? HealthText.ageText(hr.latestTime, Date.now()) : sNoHr))
         out.push(card("resting", tResting, "eos-health-resting", "health",
                       resting > 0 ? String(resting) : HealthText.none, uBpm, ""))
+        // stock's Sleep card (aarf.java g(), c()): with a night, the time asleep and its score, a ring of the time
+        // asleep against the sleep goal round the icon; without one "No data yet" and "Goal: %1$s" (R5 E-22)
+        var sleepGoal = HealthData.sleepGoalOf(night)
         out.push(card("sleep", tSleep, "eos-health-sleep", "wellness",
-                      night.valid ? HealthText.durationText(night.main.asleepMin) : HealthText.none, "",
-                      night.valid ? (night.scoreLabel || "") : sNoSleep, night.valid))
+                      night.valid ? HealthText.durationText(night.main.asleepMin) : sNoData, "",
+                      night.valid ? (night.scoreLabel || "") : HealthText.sleepGoalText(sleepGoal), true,
+                      night.valid ? Format.goalFraction(night.main.asleepMin, sleepGoal) : -1))
         // stock's card (acbf.java o(), aanu.java): the morning's variation against the personal range as a word,
         // "Last sleep session" under it; the thermometer with an arrow up above the range, down below it
         out.push(card("skintemp", tSkin, Format.skinTempIcon(skin.state), "health", HealthText.skinTempStateText(skin),
@@ -180,6 +185,7 @@ Item {
                     unit: row.modelData.unit
                     subtitle: row.modelData.subtitle
                     textValue: row.modelData.textValue
+                    progress: row.modelData.progress
                     onClicked: page.opened(row.modelData.key)
                 }
             }

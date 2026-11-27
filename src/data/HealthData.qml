@@ -36,6 +36,14 @@ QtObject {
     readonly property alias stepsLoader: steps
     // the one steps goal (health-fitness-10): /org/asteroidos/ux/steps-goal, 10000
     readonly property int stepGoal: Math.max(1, logger.stepGoalTarget)
+    // the sleep goal, minutes a night (sensorlogd's profile: /org/asteroidos/ux/sleep-goal, 60 to 1440, else 480; the
+    // phone sets it, M4 WO-11); a change is a profile change (version)
+    readonly property int sleepGoalMin: { version; return metricsLoader.sleepGoal() }
+    // the goal a night is measured against: its own as stored (the goal of the night it was estimated with), else
+    // the one in force
+    function sleepGoalOf(night) {
+        return night && night.valid && Number(night.goalMin) > 0 ? Number(night.goalMin) : sleepGoalMin
+    }
 
     // what was read, by day (plain objects: filling the cache while a page's binding is evaluated must
     // not count as a change)

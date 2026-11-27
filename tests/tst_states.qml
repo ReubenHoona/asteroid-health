@@ -98,8 +98,9 @@ Item {
             compare(hr.subtitle, "No recent heart rate")
             if (empty) {
                 compare(r[9].value, "- -")                                  // resting heart rate
-                compare(r[10].value, "- -")                                 // sleep
-                compare(r[10].subtitle, "Wear your watch to sleep")
+                compare(r[10].value, "No data yet")                         // sleep (R5 E-22: stock's card)
+                compare(r[10].subtitle, "Goal: 8 hr")
+                compare(r[10].progress, -1)
                 compare(r[1].value, "0")
                 compare(r[5].subtitle, "0 of 150 this week")
                 compare(r[6].key, "exercise")                               // M4 WO-10: no workout yet
@@ -162,7 +163,7 @@ Item {
             var page = open("sleep", "SleepDetailPage")
             compare(byName(page, "sleepDuration").valueLabel.text, "- -")
             compare(byName(page, "sleepDuration").noteLabel.text, "No data yet")
-            compare(byName(page, "sleepDuration").noteBottom, "Wear your watch to sleep")
+            compare(byName(page, "sleepDuration").noteBottom, "Goal: 8 hr") // R5 E-22
             compare(byName(page, "sleepBedtime").visible, false)
             back()
         }

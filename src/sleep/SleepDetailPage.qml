@@ -13,7 +13,8 @@ import "../ui"
 // Last night's sleep (the Sleep card's page, health-fitness-02 and -17): the time asleep, the score,
 // bedtime and wake-up time in the user's 12 or 24 hour format, the stages (Awake, REM, Light, Deep: minutes
 // and share of the night) and the naps. From the night sensorlogd estimated from steps and heart rate
-// (SleepDataLoader.lastNight). Without one: 'No data yet' and 'Wear your watch to sleep'. WELLNESS colours.
+// (SleepDataLoader.lastNight). Without one: 'No data yet'. Under either the sleep goal, 'Goal: %1$s' (R5 E-22: the
+// page's head is stock's Sleep card, SleepDetailsViewModel.java:113 aahx.c, aarf.java:441). WELLNESS colours.
 HealthPage {
     id: page
     readonly property var tones: HealthPalette.wellness
@@ -48,9 +49,7 @@ HealthPage {
         note: page.valid ? (page.night.scoreLabel || "") :
             //% "No data yet"
             qsTrId("id-no-data-yet")
-        noteBottom: page.valid ? "" :
-            //% "Wear your watch to sleep"
-            qsTrId("id-wear-to-sleep")
+        noteBottom: HealthText.sleepGoalText(HealthData.sleepGoalOf(page.night))
     }
 
     // bedtime and wake-up time, in the user's 12 or 24 hour format (health-fitness-13)

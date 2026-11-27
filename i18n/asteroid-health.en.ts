@@ -692,6 +692,11 @@
             <source>Yoga</source>
             <translation>Yoga</translation>
         </message>
+        <message id="id-sleep-goal">
+            <source>Goal: %1</source>
+            <extracomment>%1 is the sleep goal, a duration (&quot;8 hr&quot;)</extracomment>
+            <translation>Goal: %1</translation>
+        </message>
         <message id="id-skin-temp-variation">
             <source>Skin temp variation</source>
             <translation>Skin temp variation</translation>
