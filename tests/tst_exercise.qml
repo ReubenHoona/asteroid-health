@@ -121,8 +121,32 @@ Item {
             wait(100)
             compare(made.title, "Exercise days")
             compare(byName(made, "exerciseDaysWeek").value, "2 of 3")
-            for (var i = 0; i < 7; i++)
-                compare(byName(made, "exerciseDay" + i).done, i === 1 || i === 2, "day " + i)
+            // stock's head (ync.java:253-257, s() :85-96): a ring of the goal's days round the cardio icon, the 2 days
+            // done first and filled; no row of the week's day letters (stock has none, and its seven were cut by the
+            // round screen)
+            var ring = byName(made, "exerciseWeekRing")
+            verify(ring !== null)
+            compare(ring.segments, 3)
+            for (var i = 0; i < 3; i++)
+                compare(byName(made, "exerciseSegment" + i).done, i < 2, "segment " + i)
+            compare(byName(made, "exerciseSegment3"), null)
+            compare(byName(made, "exerciseDay0"), null)
+            // the ring inside the round screen (4 px margin) at every scroll position where it is on screen
+            var r = 192
+            var top = Math.max(0, made.flickable.contentHeight - made.height)
+            for (var y = 0; y <= top; y += 10) {
+                made.flickable.contentY = y
+                var a = ring.mapToItem(made, 0, 0)
+                if (a.y < 40 || a.y + ring.height > made.height - 40)
+                    continue
+                for (var k = 0; k < 2; k++) {
+                    var edgeY = k === 0 ? a.y : a.y + ring.height
+                    var half = Math.sqrt(r * r - (edgeY - r) * (edgeY - r)) - 4
+                    verify(a.x >= r - half && a.x + ring.width <= r + half, "scrolled " + y)
+                }
+            }
+            made.flickable.contentY = 0
+            wait(50)
             // today: the Run, its start in the watch's format and its active time
             compare(byName(made, "exerciseToday0").caption, "Run · " + TimeFormat.time(new Date(at(25, 7))))
             compare(byName(made, "exerciseToday0").value, "40 min")

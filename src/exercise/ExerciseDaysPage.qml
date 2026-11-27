@@ -39,11 +39,6 @@ HealthPage {
     //% "Exercise"
     readonly property string exerciseWord: qsTrId("id-exercise")
 
-    // the first letter of the name of the week's day i (0: Monday)
-    function dayLetter(i) {
-        var d = new Date(weekStart)
-        return new Date(d.getFullYear(), d.getMonth(), d.getDate() + i).toLocaleDateString(Qt.locale(), "ddd").charAt(0)
-    }
 
     StatBlock {
         objectName: "exerciseDaysWeek"
@@ -56,30 +51,42 @@ HealthPage {
         valueColor: page.tones.main
     }
 
-    // the week's days, Monday first: filled where a workout began
-    Row {
-        id: days
-        objectName: "exerciseWeekDays"
+    // Stock's head of the page is the Exercise card's model (ExerciseDetailsViewModel via ync.java:253-257 i(): the
+    // cardio icon in vhv(icon, s(done, goal)), a ring of segments: one a day of the goal, the days done first and
+    // filled, more segments when the days done pass the goal: s() at ync.java:85-96). It has no row of the week's day
+    // letters: a row of seven was ~305 px wide and the round screen cut its ends; the ring is 56 dp and fits wherever
+    // the page scrolls it
+    Item {
+        id: ring
+        objectName: "exerciseWeekRing"
+        readonly property int done: page.week.done
+        // s(): the days done, then the goal's days still to go
+        readonly property int segments: Math.max(Format.EXERCISE_DAYS_GOAL, done)
+        // the gap between two segments, degrees (Wear's segmented progress: about a stroke's width)
+        readonly property real gap: 14
         anchors.horizontalCenter: parent.horizontalCenter
-        spacing: Theme.dp(3)
+        width: Theme.dp(56)
+        height: width
         Repeater {
-            model: 7
-            delegate: Rectangle {
-                id: dot
+            model: ring.segments
+            delegate: ProgressArc {
+                id: segment
                 required property int index
-                readonly property bool done: page.week.days[dot.index] === true
-                objectName: "exerciseDay" + dot.index
-                width: Theme.dp(20)
-                height: width
-                radius: width / 2
-                color: done ? page.tones.main : HealthPalette.track
-                Label {
-                    anchors.centerIn: parent
-                    text: page.dayLetter(dot.index)
-                    role: "labelSmall"
-                    color: dot.done ? page.tones.deep : HealthPalette.label
-                }
+                readonly property bool done: segment.index < ring.done
+                objectName: "exerciseSegment" + segment.index
+                anchors.fill: parent
+                strokeWidth: Theme.dp(4)
+                startAngle: 270 + segment.index * 360 / ring.segments + ring.gap / 2
+                sweepAngle: 360 / ring.segments - ring.gap
+                color: segment.done ? page.tones.main : HealthPalette.track
             }
+        }
+        Icon {
+            anchors.centerIn: parent
+            width: Theme.size.iconSmall
+            height: width
+            name: "eos-exercise"
+            color: page.tones.main
         }
     }
 
