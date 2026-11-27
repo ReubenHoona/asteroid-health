@@ -2,12 +2,13 @@
  * Copyright (C) 2026 eos-mainline contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * R5 E-08 of asteroid-health:
+ * R5 E-08 and E-35 of asteroid-health:
  * - the Today list's last row, stock's sync section (src/today/SyncRow.qml; aawc.java, aari.java:462-466,
  *   afzj.A/B): hidden until a phone ended a sync (/org/asteroidos/health/sync/supported); "Last synced" and when
  *   (aibv.w: the time today, the month and day within a year, the date before; "- -" never), "Syncing" with the
  *   button not usable, "Can't Sync Data" with "Retry"; the list's opening writes "today@<ms>" to
  *   sync/request (stock WEAR_TODAY_APP_OPEN), the button "button@<ms>" (WEAR_TODAY_SYNC_BUTTON);
+ * - the distance unit from settings/imperial-units (the phone's units, asteroid-btsyncd), the locale's when unset.
  * The keys as asteroid-btsyncd writes them; the data is make-fixtures.py's invented one. Shots in /tmp/w3hlth-shots.
  */
 
@@ -30,6 +31,7 @@ Item {
     ConfigurationValue { id: syncState; key: "/org/asteroidos/health/sync/state"; defaultValue: "idle" }
     ConfigurationValue { id: lastMs; key: "/org/asteroidos/health/sync/last-ms"; defaultValue: 0 }
     ConfigurationValue { id: request; key: "/org/asteroidos/health/sync/request"; defaultValue: "" }
+    ConfigurationValue { id: units; key: "/org/asteroidos/settings/imperial-units"; defaultValue: false }
     ConfigurationValue { id: use12h; key: "/org/asteroidos/settings/use-12h-format"; defaultValue: false }
 
     Component { id: todayComp; TodayPage { width: 384; height: 384 } }
@@ -165,6 +167,21 @@ Item {
             // more than a year: the short date
             var old = new Date(2025, 5, 2, 9, 0)
             compare(row.whenText(old.getTime(), now), Qt.locale().toString(old, Qt.locale().dateFormat(Locale.ShortFormat)))
+        }
+
+        // R5 E-35: the phone's units, not the watch's language
+        function test_4_units() {
+            units.value = true
+            wait(200)
+            compare(HealthText.imperial, true)
+            var page = today()
+            compare(page.rows[3].unit, "mi")
+            cleanup()
+            units.value = false
+            wait(200)
+            compare(HealthText.imperial, false)
+            page = today()
+            compare(page.rows[3].unit, "km")
         }
     }
 }

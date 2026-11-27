@@ -7,6 +7,7 @@ pragma Singleton
 
 import QtQuick
 import org.asteroid.controls
+import Nemo.Configuration
 
 import "HealthStats.js" as Stats
 import "HealthFormat.js" as Format
@@ -68,11 +69,16 @@ QtObject {
         return TimeFormat.time(new Date(timeSec * 1000))
     }
 
-    // the distance with its unit, in the locale's units
+    // the distance with its unit: the phone's unit system (R5 E-35; stock takes the account's units, not the
+    // watch's language), which asteroid-btsyncd keeps at settings/imperial-units; unset: the locale's
     function distanceText(metres) {
         return Format.distanceText(metres, imperial, locale)
     }
-    readonly property bool imperial: locale.measurementSystem !== Locale.MetricSystem
+    property ConfigurationValue _units: ConfigurationValue {
+        key: "/org/asteroidos/settings/imperial-units"
+        defaultValue: Qt.locale().measurementSystem !== Locale.MetricSystem
+    }
+    readonly property bool imperial: _units.value === true || _units.value === "true"
 
     // "7 hr 12 min", "7 hr", "45 min"
     function durationText(minutes) {
