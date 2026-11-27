@@ -7,6 +7,7 @@
         <file>data/HealthText.qml</file>
         <file>data/HealthStats.js</file>
         <file>data/HealthFormat.js</file>
+        <file>data/ExerciseNames.js</file>
         <file>data/qmldir</file>
         <file>ui/HealthPage.qml</file>
         <file>ui/StatBlock.qml</file>
@@ -18,6 +19,7 @@
         <file>heartrate/HeartrateDetailPage.qml</file>
         <file>heartrate/RestingHeartRatePage.qml</file>
         <file>metrics/MetricDetailPage.qml</file>
+        <file>exercise/ExerciseDaysPage.qml</file>
         <file>sleep/SleepDetailPage.qml</file>
         <file>morning/MorningBriefPage.qml</file>
         <file>settings/HealthSettingsPage.qml</file>

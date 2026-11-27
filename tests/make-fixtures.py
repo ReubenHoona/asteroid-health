@@ -16,6 +16,7 @@
 #   today-5    a full day, the step goal reached
 #   today-6    a full day
 # a second argument: "empty" writes no data, "stale" ends today's readings three hours ago
+# FIXTURE_NOW (seconds since the epoch, optional): the time of the run instead of now (the fake clock of a test)
 # plus heartrate.db (every valid reading of the day files, for the zones and Active Zone Minutes),
 # health.db's daily rows with the resting heart rate sensorlogd estimates once a day (today 52,
 # today-1 54, today-3 55, today-5 53, today-6 51),
@@ -44,8 +45,8 @@ for d in (hr_dir, st_dir):
         os.unlink(os.path.join(d, f))
 
 rnd = random.Random(20261030)
-now = time.time()
-today = date.today()
+now = float(os.environ.get("FIXTURE_NOW") or time.time())
+today = datetime.fromtimestamp(now).date()
 
 
 def local(day, h, m=0):
@@ -167,7 +168,29 @@ hdb.execute("CREATE TABLE daily (date TEXT PRIMARY KEY, resting_hr INTEGER, hrv_
             "hours_met INTEGER, cardio_load REAL, readiness INTEGER, closed_ms INTEGER, seq INTEGER NOT NULL DEFAULT 0)")
 for n, (k, bpm) in enumerate(((0, 52), (1, 54), (3, 55), (5, 53), (6, 51))):
     hdb.execute("INSERT INTO daily (date, resting_hr, seq) VALUES (?, ?, ?)", (D[k].isoformat(), bpm, n + 1))
-hdb.execute("INSERT INTO meta VALUES ('seq', 5)")
+# M4 WO-10: health.db's workouts (sensorlogd's table, store/healthDb.cpp), fictional, where the heart rate files
+# have them: today 07:00 Run 40 min 5.2 km, yesterday 18:00 Bike 45 min (no distance), today-5 17:00 Walk 60 min,
+# today-3 a workout deleted (a tombstone) and one still on today at 14:00 (no end)
+hdb.execute("CREATE TABLE workout (id INTEGER PRIMARY KEY, start_ms INTEGER NOT NULL UNIQUE, end_ms INTEGER, "
+            "active_s INTEGER NOT NULL DEFAULT 0, type TEXT NOT NULL, distance_m REAL, kcal REAL, steps INTEGER, "
+            "avg_bpm INTEGER, max_bpm INTEGER, light_s INTEGER, moderate_s INTEGER, vigorous_s INTEGER, peak_s INTEGER, "
+            "azm INTEGER, elev_gain_m REAL, source TEXT NOT NULL DEFAULT 'manual', gps INTEGER NOT NULL DEFAULT 0, "
+            "imported_from TEXT, seq INTEGER NOT NULL DEFAULT 0, deleted INTEGER NOT NULL DEFAULT 0)")
+WORKOUTS = [  # day, hour, minute, minutes, type, metres, kcal, moderate, vigorous, peak (minutes), azm, deleted, ended
+    (0, 7, 0, 40, "Run", 5200.0, 412.0, 10, 22, 4, 62, 0, True),
+    (1, 18, 0, 45, "Bike", 0.0, 380.0, 25, 12, 0, 49, 0, True),
+    (5, 17, 0, 60, "Walk", 4600.0, 260.0, 30, 0, 0, 30, 0, True),
+    (3, 10, 0, 20, "Yoga", 0.0, 60.0, 0, 0, 0, 0, 1, True),
+]
+for n, (k, h, m, mins, typ, metres, kcal, mod, vig, peak, azm, deleted, ended) in enumerate(WORKOUTS):
+    start = local(D[k], h, m) * 1000
+    hdb.execute("INSERT INTO workout (start_ms, end_ms, active_s, type, distance_m, kcal, steps, avg_bpm, max_bpm, "
+                "light_s, moderate_s, vigorous_s, peak_s, azm, seq, deleted) VALUES (?, ?, ?, ?, ?, ?, 0, 120, 160, 0, ?, ?, ?, ?, ?, ?)",
+                (start, start + mins * 60000 if ended else None, mins * 60, typ, metres, kcal, mod * 60, vig * 60,
+                 peak * 60, azm, 10 + n, deleted))
+if local(D[0], 14) < now:
+    hdb.execute("INSERT INTO workout (start_ms, active_s, type, seq) VALUES (?, 0, 'Hike', 20)", (local(D[0], 14) * 1000,))
+hdb.execute("INSERT INTO meta VALUES ('seq', 20)")
 hdb.execute("PRAGMA user_version=1")
 hdb.commit()
 hdb.close()

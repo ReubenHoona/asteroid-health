@@ -442,5 +442,255 @@
             <source>Naps</source>
             <translation>Naps</translation>
         </message>
+        <message id="id-exercise-days">
+            <source>Exercise days</source>
+            <translation>Exercise days</translation>
+        </message>
+        <message id="id-exercise-days-week">
+            <source>%1 of %2 days this week</source>
+            <extracomment>%1 is the days of this week with a workout, %2 the goal (3); stock plurals 0x7f12005c</extracomment>
+            <translation>%1 of %2 days this week</translation>
+        </message>
+        <message id="id-days-this-week">
+            <source>Days this week</source>
+            <translation>Days this week</translation>
+        </message>
+        <message id="id-days-of">
+            <source>%1 of %2</source>
+            <extracomment>%1 is the days of this week with a workout, %2 the goal (3)</extracomment>
+            <translation>%1 of %2</translation>
+        </message>
+        <message id="id-this-week">
+            <source>This week</source>
+            <translation>This week</translation>
+        </message>
+        <message id="id-total-exercise-time">
+            <source>Total exercise time</source>
+            <translation>Total exercise time</translation>
+        </message>
+        <message id="id-calories">
+            <source>Calories</source>
+            <translation>Calories</translation>
+        </message>
+        <message id="id-exercise">
+            <source>Exercise</source>
+            <translation>Exercise</translation>
+        </message>
+        <message id="id-ex-type-aerobics">
+            <source>Aerobics</source>
+            <translation>Aerobics</translation>
+        </message>
+        <message id="id-ex-type-badminton">
+            <source>Badminton</source>
+            <translation>Badminton</translation>
+        </message>
+        <message id="id-ex-type-baseball">
+            <source>Baseball</source>
+            <translation>Baseball</translation>
+        </message>
+        <message id="id-ex-type-basketball">
+            <source>Basketball</source>
+            <translation>Basketball</translation>
+        </message>
+        <message id="id-ex-type-bike">
+            <source>Bike</source>
+            <translation>Bike</translation>
+        </message>
+        <message id="id-ex-type-bootcamp">
+            <source>Bootcamp</source>
+            <translation>Bootcamp</translation>
+        </message>
+        <message id="id-ex-type-canoeing">
+            <source>Canoeing</source>
+            <translation>Canoeing</translation>
+        </message>
+        <message id="id-ex-type-circuittraining">
+            <source>Circuit training</source>
+            <translation>Circuit training</translation>
+        </message>
+        <message id="id-ex-type-coretraining">
+            <source>Core training</source>
+            <translation>Core training</translation>
+        </message>
+        <message id="id-ex-type-cricket">
+            <source>Cricket</source>
+            <translation>Cricket</translation>
+        </message>
+        <message id="id-ex-type-crosscountryski">
+            <source>Cross-country skiing</source>
+            <translation>Cross-country skiing</translation>
+        </message>
+        <message id="id-ex-type-crossfit">
+            <source>CrossFit</source>
+            <translation>CrossFit</translation>
+        </message>
+        <message id="id-ex-type-dance">
+            <source>Dancing</source>
+            <translation>Dancing</translation>
+        </message>
+        <message id="id-ex-type-elliptical">
+            <source>Elliptical</source>
+            <translation>Elliptical</translation>
+        </message>
+        <message id="id-ex-type-fieldhockey">
+            <source>Field hockey</source>
+            <translation>Field hockey</translation>
+        </message>
+        <message id="id-ex-type-football">
+            <source>Football</source>
+            <translation>Football</translation>
+        </message>
+        <message id="id-ex-type-golf">
+            <source>Golf</source>
+            <translation>Golf</translation>
+        </message>
+        <message id="id-ex-type-hiit">
+            <source>HIIT</source>
+            <translation>HIIT</translation>
+        </message>
+        <message id="id-ex-type-hike">
+            <source>Hike</source>
+            <translation>Hike</translation>
+        </message>
+        <message id="id-ex-type-indoorclimbing">
+            <source>Indoor climbing</source>
+            <translation>Indoor climbing</translation>
+        </message>
+        <message id="id-ex-type-intervalworkout">
+            <source>Interval workout</source>
+            <translation>Interval workout</translation>
+        </message>
+        <message id="id-ex-type-kayaking">
+            <source>Kayaking</source>
+            <translation>Kayaking</translation>
+        </message>
+        <message id="id-ex-type-kickboxing">
+            <source>Kickboxing</source>
+            <translation>Kickboxing</translation>
+        </message>
+        <message id="id-ex-type-martialarts">
+            <source>Martial arts</source>
+            <translation>Martial arts</translation>
+        </message>
+        <message id="id-ex-type-mountainbiking">
+            <source>Mountain Biking</source>
+            <translation>Mountain Biking</translation>
+        </message>
+        <message id="id-ex-type-outdoorworkout">
+            <source>Outdoor workout</source>
+            <translation>Outdoor workout</translation>
+        </message>
+        <message id="id-ex-type-openwaterswim">
+            <source>Swim - Open</source>
+            <translation>Swim - Open</translation>
+        </message>
+        <message id="id-ex-type-pickleball">
+            <source>Pickleball</source>
+            <translation>Pickleball</translation>
+        </message>
+        <message id="id-ex-type-padel">
+            <source>Padel</source>
+            <translation>Padel</translation>
+        </message>
+        <message id="id-ex-type-pilates">
+            <source>Pilates</source>
+            <translation>Pilates</translation>
+        </message>
+        <message id="id-ex-type-poolswim">
+            <source>Swim - Pool</source>
+            <translation>Swim - Pool</translation>
+        </message>
+        <message id="id-ex-type-powerlifting">
+            <source>Powerlifting</source>
+            <translation>Powerlifting</translation>
+        </message>
+        <message id="id-ex-type-rollerblading">
+            <source>Rollerblading</source>
+            <translation>Rollerblading</translation>
+        </message>
+        <message id="id-ex-type-rowingmachine">
+            <source>Rowing machine</source>
+            <translation>Rowing machine</translation>
+        </message>
+        <message id="id-ex-type-rugby">
+            <source>Rugby</source>
+            <translation>Rugby</translation>
+        </message>
+        <message id="id-ex-type-run">
+            <source>Run</source>
+            <translation>Run</translation>
+        </message>
+        <message id="id-ex-type-skating">
+            <source>Skating</source>
+            <translation>Skating</translation>
+        </message>
+        <message id="id-ex-type-skiing">
+            <source>Skiing</source>
+            <translation>Skiing</translation>
+        </message>
+        <message id="id-ex-type-snowboarding">
+            <source>Snowboarding</source>
+            <translation>Snowboarding</translation>
+        </message>
+        <message id="id-ex-type-soccer">
+            <source>Soccer</source>
+            <translation>Soccer</translation>
+        </message>
+        <message id="id-ex-type-spinning">
+            <source>Spinning</source>
+            <translation>Spinning</translation>
+        </message>
+        <message id="id-ex-type-sport">
+            <source>Sport</source>
+            <translation>Sport</translation>
+        </message>
+        <message id="id-ex-type-stairclimber">
+            <source>Stair climber</source>
+            <translation>Stair climber</translation>
+        </message>
+        <message id="id-ex-type-strengthtraining">
+            <source>Strength training</source>
+            <translation>Strength training</translation>
+        </message>
+        <message id="id-ex-type-sup">
+            <source>Paddleboarding</source>
+            <translation>Paddleboarding</translation>
+        </message>
+        <message id="id-ex-type-surfing">
+            <source>Surfing</source>
+            <translation>Surfing</translation>
+        </message>
+        <message id="id-ex-type-swim">
+            <source>Swim</source>
+            <translation>Swim</translation>
+        </message>
+        <message id="id-ex-type-tennis">
+            <source>Tennis</source>
+            <translation>Tennis</translation>
+        </message>
+        <message id="id-ex-type-treadmill">
+            <source>Treadmill</source>
+            <translation>Treadmill</translation>
+        </message>
+        <message id="id-ex-type-walk">
+            <source>Walk</source>
+            <translation>Walk</translation>
+        </message>
+        <message id="id-ex-type-weightlifting">
+            <source>Weightlifting</source>
+            <translation>Weightlifting</translation>
+        </message>
+        <message id="id-ex-type-weights">
+            <source>Weights</source>
+            <translation>Weights</translation>
+        </message>
+        <message id="id-ex-type-workout">
+            <source>Workout</source>
+            <translation>Workout</translation>
+        </message>
+        <message id="id-ex-type-yoga">
+            <source>Yoga</source>
+            <translation>Yoga</translation>
+        </message>
     </context>
 </TS>

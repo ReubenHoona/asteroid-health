@@ -298,7 +298,7 @@ Item {
             startApp()
             var page = todayPage()
             compare(HealthData.stepGoal, 8000)
-            compare(page.rows.length, 11)
+            compare(page.rows.length, 12)
             shot("today-top")
         }
 
@@ -306,9 +306,9 @@ Item {
         function test_1_todayList() {
             var page = todayPage()
             var keys = page.rows.map(function(r) { return r.type + ":" + r.key })
-            compare(keys.join(" "), "goal:steps card:steps card:energy card:distance card:floors card:azm card:hourly card:heartrate card:resting card:sleep settings:settings")
+            compare(keys.join(" "), "goal:steps card:steps card:energy card:distance card:floors card:azm card:exercise card:hourly card:heartrate card:resting card:sleep settings:settings")
             var titles = page.rows.filter(function(r) { return r.type === "card" }).map(function(r) { return r.title })
-            compare(titles.join("|"), "Steps|Energy burned|Distance|Floors|Active Zone Minutes|Hourly activity|Heart rate|Resting heart rate|Sleep")
+            compare(titles.join("|"), "Steps|Energy burned|Distance|Floors|Active Zone Minutes|Exercise days|Hourly activity|Heart rate|Resting heart rate|Sleep")
             var steps = HealthData.stepsOf(HealthData.today)
             verify(steps > 1000)
             var r = page.rows
@@ -327,18 +327,24 @@ Item {
             compare(r[5].value, String(s.azm))
             verify(s.azm > 0)
             compare(r[5].subtitle, HealthText.number(HealthData.azmWeek(HealthData.today)) + " of 150 this week")
-            compare(r[6].value, String(s.hoursMet))
-            compare(r[6].subtitle, s.hoursMet >= 9 ? "Completed today" : s.hoursMet + " of 9 hr")
-            compare(r[7].value, "100")
-            compare(r[7].unit, "bpm")
-            compare(r[7].subtitle, "5 min ago")
-            compare(r[8].value, "52")
-            compare(r[9].value, "7 hr")
-            compare(r[9].subtitle, "Good")
-            compare(r[9].textValue, true)
+            // M4 WO-10: the days of this week with a workout that ended (the fixture's Run today, Bike yesterday and
+            // Walk five days ago; the deleted one and the one still on do not count), of stock's goal of 3
+            var dow = (HealthData.today.getDay() + 6) % 7
+            var days = 1 + (dow >= 1 ? 1 : 0) + (dow >= 5 ? 1 : 0)
+            compare(r[6].value, String(days))
+            compare(r[6].subtitle, days + " of 3 days this week")
+            compare(r[7].value, String(s.hoursMet))
+            compare(r[7].subtitle, s.hoursMet >= 9 ? "Completed today" : s.hoursMet + " of 9 hr")
+            compare(r[8].value, "100")
+            compare(r[8].unit, "bpm")
+            compare(r[8].subtitle, "5 min ago")
+            compare(r[9].value, "52")
+            compare(r[10].value, "7 hr")
+            compare(r[10].subtitle, "Good")
+            compare(r[10].textValue, true)
             // stock's categories: FITNESS, HEALTH, WELLNESS (health-fitness-20)
             var cats = page.rows.filter(function(x) { return x.type === "card" }).map(function(x) { return x.category })
-            compare(cats.join(" "), "fitness fitness fitness fitness fitness fitness health health wellness")
+            compare(cats.join(" "), "fitness fitness fitness fitness fitness fitness fitness health health wellness")
             // no 'Overview' sentence header, no 'Heartrate' preview: the list starts with the ring
             var all = texts(page)
             verify(all.indexOf("Overview") < 0)
@@ -374,7 +380,7 @@ Item {
         function test_3_cardColours() {
             var page = todayPage()
             var want = { steps: "#43DCD0", energy: "#43DCD0", distance: "#43DCD0", floors: "#43DCD0", azm: "#43DCD0",
-                         hourly: "#43DCD0", heartrate: "#2BC7F7", resting: "#2BC7F7", sleep: "#D8B9FF" }
+                         exercise: "#43DCD0", hourly: "#43DCD0", heartrate: "#2BC7F7", resting: "#2BC7F7", sleep: "#D8B9FF" }
             for (var key in want) {
                 rowItem(page, key)
                 var card = byName(page, "card-" + key)
@@ -422,7 +428,8 @@ Item {
         // every card opens its page
         function test_5_cardsOpen() {
             var pages = { steps: "StepsDetailPage", energy: "MetricDetailPage", distance: "MetricDetailPage",
-                          floors: "MetricDetailPage", azm: "MetricDetailPage", hourly: "MetricDetailPage",
+                          floors: "MetricDetailPage", azm: "MetricDetailPage", exercise: "ExerciseDaysPage",
+                          hourly: "MetricDetailPage",
                           heartrate: "HeartrateDetailPage", resting: "RestingHeartRatePage", sleep: "SleepDetailPage",
                           settings: "HealthSettingsPage" }
             for (var key in pages) {
@@ -888,7 +895,7 @@ Item {
         function test_f_restart() {
             startApp()
             var page = todayPage()
-            compare(page.rows.length, 11)
+            compare(page.rows.length, 12)
             noTimers(page, "today")
             // no sensor is on while the list is the page: the heart rate sensor is the heart rate page's
             compare(find(app, "HrmSensor"), null)

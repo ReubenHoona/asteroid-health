@@ -16,7 +16,8 @@ import "../ui"
  * The Health app's first screen as stock's Today list (TodayRoute, health-fitness-02): a scrolling
  * list (a ScalingList: the TransformingLazyColumn's edge scaling) with the main goal ring, then one
  * card per metric in stock's order: Steps, Energy burned, Distance, Floors, Active Zone Minutes,
- * Hourly activity, Heart rate, Resting heart rate, Sleep. No title (the curved time of the app sits at
+ * Exercise days (stock's stat 6, EXERCISE: uxo.java; M4 WO-10), Hourly activity, Heart rate, Resting
+ * heart rate, Sleep. No title (the curved time of the app sits at
  * the top as in the other apps). A tap on a card says which one it is: opened(key).
  */
 Item {
@@ -62,6 +63,11 @@ Item {
         //% "%1 of %2 this week"
         //: %1 is the Active Zone Minutes of this week so far, %2 the weekly goal (150)
         var sAzm = qsTrId("id-azm-week")
+        //% "Exercise days"
+        var tExercise = qsTrId("id-exercise-days")
+        //% "%1 of %2 days this week"
+        //: %1 is the days of this week with a workout, %2 the goal (3); stock plurals 0x7f12005c
+        var sExercise = qsTrId("id-exercise-days-week")
         //% "Hourly activity"
         var tHourly = qsTrId("id-hourly-activity")
         //% "Heart rate"
@@ -88,6 +94,9 @@ Item {
         out.push(card("floors", tFloors, "eos-health-floors", "fitness", HealthText.number(s.floors || 0), "", ""))
         out.push(card("azm", tAzm, "eos-health-azm", "fitness", HealthText.number(s.azm || 0), "",
                       sAzm.arg(HealthText.number(HealthData.azmWeek(t))).arg(HealthText.number(HealthData.metrics.azmWeeklyGoal))))
+        var week = Format.exerciseWeek(HealthData.weekWorkouts(t), Format.weekStartMs(t.getTime()))
+        out.push(card("exercise", tExercise, "eos-exercise", "fitness", String(week.done), "",
+                      sExercise.arg(week.done).arg(Format.EXERCISE_DAYS_GOAL)))
         out.push(card("hourly", tHourly, "eos-health-hourly", "fitness", String(s.hoursMet || 0), "",
                       HealthText.hourlyText(s.hoursMet || 0, s.hoursTotal || 0)))
 

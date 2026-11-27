@@ -14,8 +14,8 @@ import "HealthStats.js" as Stats
  * The data of every Health page, read once and shared: the day summaries of sensorlogd's
  * HealthMetricsLoader (steps, distance, energy, floors, zones, Active Zone Minutes, hourly
  * activity), last night's sleep, the heart rate readings of a day, the resting heart rate of a
- * day (sensorlogd's daily estimate) and the settings (LoggerSettings: the one steps goal and the
- * Health features).
+ * day (sensorlogd's daily estimate), the workouts of a week (WorkoutLoader: health.db) and the
+ * settings (LoggerSettings: the one steps goal and the Health features).
  *
  * Nothing here runs on a timer. The loaders watch the day files and emit dataChanged() when
  * the daemon writes (a batch of the sensor hub, so a few times an hour at most); pages read
@@ -37,7 +37,7 @@ QtObject {
 
     // what was read, by day (plain objects: filling the cache while a page's binding is evaluated must
     // not count as a change)
-    readonly property var _store: ({ days: {}, hr: {}, resting: {}, sleep: null })
+    readonly property var _store: ({ days: {}, hr: {}, resting: {}, sleep: null, workouts: {} })
 
     property LoggerSettings _logger: LoggerSettings { id: logger }
     property HealthMetricsLoader _metrics: HealthMetricsLoader {
@@ -55,6 +55,10 @@ QtObject {
     }
     property HrDataLoader _hrLoader: HrDataLoader {
         id: hrLoader
+        onDataChanged: data.touch()
+    }
+    property WorkoutLoader _workoutLoader: WorkoutLoader {
+        id: workoutLoader
         onDataChanged: data.touch()
     }
     property Connections _app: Connections {
@@ -89,6 +93,7 @@ QtObject {
         _store.hr = hrKeep
         _store.resting = {}
         _store.sleep = null
+        _store.workouts = {}
         today = t
         version++
     }
@@ -148,6 +153,18 @@ QtObject {
         for (var i = dow; i >= 0; i--)
             total += summary(Stats.addDays(date, -i)).azm || 0
         return total
+    }
+
+    // The workouts of the week of `date` (Monday to the date, as the Active Zone Minutes week), newest first:
+    // WorkoutLoader.workouts (startMs, endMs, activeS, type, distanceM, kcal, azm, moderateS, vigorousS, peakS,
+    // ended), cached until health.db changes
+    function weekWorkouts(date) {
+        var key = Stats.dayKey(date)
+        if (_store.workouts[key] === undefined) {
+            var dow = (date.getDay() + 6) % 7
+            _store.workouts[key] = workoutLoader.workouts(Stats.addDays(date, -dow), Stats.addDays(date, 0))
+        }
+        return _store.workouts[key]
     }
 
     // the last seven days ending on `end` (a Date): [{date, summary}]

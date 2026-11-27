@@ -14,6 +14,60 @@
 
 /* The steps against the goal, as the main goal card says it: "left" (goal - steps), "met" (the
  * goal exactly) and "over" (steps - goal). Stock '%1$s left' / 'Goal met' / '%1$s over goal'. */
+// ---- Exercise days (M4 WO-10) ----
+// the goal without the account's: stock 'new tuk(0, 3)' (ttd.java:168)
+var EXERCISE_DAYS_GOAL = 3
+
+// local midnight of the Monday of a time's week (ms): the week of sensorlogd's Active Zone Minutes
+function weekStartMs(ms) {
+    var d = new Date(ms)
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate() - (d.getDay() + 6) % 7).getTime()
+}
+
+// The week of workouts (WorkoutLoader rows of the week that starts at weekStart, ms): the days with one
+// that ended (days[0] Monday), how many, and the totals of those workouts: active time (s), Active Zone
+// Minutes, kcal and the time in the Moderate, Vigorous and Peak zones (s)
+function exerciseWeek(list, weekStart) {
+    var out = { done: 0, days: [false, false, false, false, false, false, false], count: 0, activeS: 0, azm: 0, kcal: 0,
+                moderateS: 0, vigorousS: 0, peakS: 0 }
+    var start = new Date(weekStart)
+    for (var i = 0; list && i < list.length; i++) {
+        var w = list[i]
+        if (!w || w.ended === false || !(Number(w.startMs) > 0))
+            continue
+        var at = new Date(Number(w.startMs))
+        var day = Math.round((new Date(at.getFullYear(), at.getMonth(), at.getDate()) -
+                              new Date(start.getFullYear(), start.getMonth(), start.getDate())) / 86400000)
+        if (day < 0 || day > 6)
+            continue
+        if (!out.days[day]) {
+            out.days[day] = true
+            out.done++
+        }
+        out.count++
+        out.activeS += Number(w.activeS) || 0
+        out.azm += Number(w.azm) || 0
+        out.kcal += Number(w.kcal) || 0
+        out.moderateS += Number(w.moderateS) || 0
+        out.vigorousS += Number(w.vigorousS) || 0
+        out.peakS += Number(w.peakS) || 0
+    }
+    return out
+}
+
+// the workouts of a list that ended and began on the day that starts at dayStart (ms), as listed (newest first)
+function dayWorkouts(list, dayStart) {
+    var s = new Date(dayStart)
+    var end = new Date(s.getFullYear(), s.getMonth(), s.getDate() + 1).getTime()
+    var out = []
+    for (var i = 0; list && i < list.length; i++) {
+        var w = list[i]
+        if (w && w.ended !== false && Number(w.startMs) >= dayStart && Number(w.startMs) < end)
+            out.push(w)
+    }
+    return out
+}
+
 function goalState(steps, goal) {
     steps = Math.max(0, Math.round(steps))
     goal = Math.max(1, Math.round(goal))

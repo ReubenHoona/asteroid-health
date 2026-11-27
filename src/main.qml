@@ -59,6 +59,7 @@ Application {
         "distance": "metrics/MetricDetailPage.qml",
         "floors": "metrics/MetricDetailPage.qml",
         "azm": "metrics/MetricDetailPage.qml",
+        "exercise": "exercise/ExerciseDaysPage.qml",
         "hourly": "metrics/MetricDetailPage.qml",
         "heartrate": "heartrate/HeartrateDetailPage.qml",
         "resting": "heartrate/RestingHeartRatePage.qml",
@@ -74,7 +75,7 @@ Application {
         return _components[file]
     }
 
-    // the page of a card: "steps", "energy", "distance", "floors", "azm", "hourly", "heartrate",
+    // the page of a card: "steps", "energy", "distance", "floors", "azm", "exercise", "hourly", "heartrate",
     // "resting", "sleep"; and "settings", "morning"
     function pageFor(key) {
         return pageFiles.hasOwnProperty(key) ? _component(pageFiles[key]) : null

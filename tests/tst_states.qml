@@ -92,17 +92,20 @@ Item {
             var r = page.rows
             compare(r[0].value, empty ? "0" : r[0].value)
             // the heart rate card has no value and says why
-            var hr = r[7]
+            var hr = r[8]
             compare(hr.key, "heartrate")
             compare(hr.value, "- -")
             compare(hr.subtitle, "No recent heart rate")
             if (empty) {
-                compare(r[8].value, "- -")                                  // resting heart rate
-                compare(r[9].value, "- -")                                  // sleep
-                compare(r[9].subtitle, "Wear your watch to sleep")
+                compare(r[9].value, "- -")                                  // resting heart rate
+                compare(r[10].value, "- -")                                 // sleep
+                compare(r[10].subtitle, "Wear your watch to sleep")
                 compare(r[1].value, "0")
                 compare(r[5].subtitle, "0 of 150 this week")
-                compare(r[6].subtitle, "0 of 9 hr")
+                compare(r[6].key, "exercise")                               // M4 WO-10: no workout yet
+                compare(r[6].value, "0")
+                compare(r[6].subtitle, "0 of 3 days this week")
+                compare(r[7].subtitle, "0 of 9 hr")
             }
         }
 
