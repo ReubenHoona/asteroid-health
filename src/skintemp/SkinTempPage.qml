@@ -58,6 +58,8 @@ HealthPage {
         objectName: "skinTempState"
         value: HealthText.skinTempStateText(page.view)
         valueRole: "titleMedium"
+        // a state in words ("Wear your watch to sleep", "Wear to sleep 3 more times"): wrapped, as stock's card text
+        textValue: true
         valueColor: page.tones.main
         note: Format.skinTempHasValue(page.view.state) ?
                   //% "Last sleep session"

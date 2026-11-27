@@ -178,6 +178,27 @@ Item {
             back()
         }
 
+        // the Skin temp variation page without a night: stock's empty state wraps inside the round screen (the cyan
+        // headline was one line in its large type and cut at both sides)
+        function test_7_skinTempPageWithoutANight() {
+            if (!empty)
+                skip("the stale fixture has the nights")
+            var page = open("skintemp", "SkinTempPage")
+            var label = byName(page, "skinTempState").valueLabel
+            compare(label.text, "Wear your watch to sleep")
+            verify(label.lineCount >= 2, "lines " + label.lineCount)
+            verify(label.contentWidth <= label.width + 0.5)
+            var p = label.mapToItem(app, (label.width - label.contentWidth) / 2, 0)
+            var q = label.mapToItem(app, (label.width + label.contentWidth) / 2, label.contentHeight)
+            function inside(x, y) { return (x - 192) * (x - 192) + (y - 192) * (y - 192) <= 188 * 188 }
+            verify(inside(p.x, p.y) && inside(q.x, p.y) && inside(p.x, q.y) && inside(q.x, q.y),
+                   "headline " + p.x + "," + p.y + " - " + q.x + "," + q.y)
+            wait(300)
+            var img = grabImage(page)
+            img.save("/tmp/w3hlth-shots/states-skintemp-empty.png")
+            back()
+        }
+
         function test_6_ageAfterAnHour() {
             // a reading more than an hour old shows the time of day, in the 12 or 24 hour format
             var t = Math.floor(Date.now() / 1000) - 3 * 3600

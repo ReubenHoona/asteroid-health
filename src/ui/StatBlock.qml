@@ -21,6 +21,9 @@ Column {
     property string noteBottom: ""
     property color valueColor: HealthPalette.fitness.main
     property string valueRole: "titleLarge"
+    // the value is a sentence (a state: "Wear your watch to sleep"), not a number: it wraps inside the round screen's
+    // safe width, centred, as stock's cards' text does
+    property bool textValue: false
     readonly property alias valueLabel: valueText
     readonly property alias captionLabel: captionText
     readonly property alias noteLabel: noteText
@@ -43,6 +46,10 @@ Column {
         spacing: Theme.dp(3)
         Label {
             id: valueText
+            width: block.textValue ? Math.round(block.width * 0.84) : implicitWidth
+            wrapMode: block.textValue ? Text.Wrap : Text.NoWrap
+            maximumLineCount: block.textValue ? 3 : 1
+            horizontalAlignment: Text.AlignHCenter
             text: block.value
             role: block.valueRole
             color: block.valueColor
